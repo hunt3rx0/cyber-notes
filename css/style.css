@@ -190,30 +190,33 @@ main {
   margin-bottom: 0.5rem;
 }
 
+/* Note Metadata - Vertical List with Highlights */
 .note-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin-top: 0.8rem;
-    font-family: 'JetBrains Mono', monospace;
+    flex-direction: column; /* Forces items to stack 1 by 1 vertically */
+    gap: 0.4rem; /* Spacing between each line */
+    margin: 0.8rem 0 1.2rem 0;
+    font-size: 0.95rem;
+    font-family: 'Oxanium', sans-serif;
 }
 
-.note-meta span {
-    color: var(--text-muted);
-    font-size: 0.85rem;
+.note-meta .row {
+    display: block;
+    color: var(--text-muted); /* Makes the labels a soft grey */
 }
 
-.note-meta .pill {
-    color: var(--text);
-    font-weight: 400;
-    background: transparent;
-    padding: 0;
-    border: none;
+/* The highlight inside the row */
+.note-meta .highlight {
+    color: var(--accent); /* Bright green/teal */
+    font-weight: 600;
 }
 
-.note-meta span::before {
-    content: "[+] "; /* Adds a terminal bracket before every label */
+/* Optional: If you want to keep the [+] symbol */
+.note-meta .row::before {
+    content: "[+] ";
     color: var(--accent);
+    opacity: 0.8;
+    font-size: 0.85rem;
 }
 
 .note-content {
