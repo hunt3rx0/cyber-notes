@@ -235,19 +235,25 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
     <p>Personal learning notes</p>
   </footer>
 
-  <script>
-  document.querySelectorAll('.note-content pre code').forEach(block => {
-    let html = block.innerHTML;
+<script>
+    document.querySelectorAll('.note-content pre code').forEach(block => {
+        let html = block.innerHTML;
 
-    // 1. Find lines starting with a comment (#) and color them grey
-    html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+        // 1. Handle Comments (Lines starting with #)
+        html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
 
-    // 2. Find lines starting with common Linux commands and color them
-    html = html.replace(/^\s*(wget|unzip|python3|sudo|nmap|ssh|ssh\-keygen|rustscan|gobuster|curl|nc|echo|cat|cd|mkdir|cp|mv|rm|chmod|chown|find|grep|awk|sed|tar|scp|systemctl|su|exit|whoami|id|ls|ping|traceroute|dig|host|ps|kill|pwd|touch|ln|read|exec|bash|sh|zsh|set|export|alias|clear)\b/gm, '<span class="cmd">$1</span>');
+        // 2. THE NUCLEAR FIX: Find the command ANYWHERE on the line
+        // The \b ensures it catches whole words, not partial matches.
+        let commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','rustscan','gobuster','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','traceroute','dig','host','ps','kill','pwd','touch','ln','read','exec','bash','sh','zsh','set','export','alias','clear'];
+        
+        // Create a regex that looks for these words ANYWHERE (not just at start), but only if they are followed by a space or end of line.
+        let regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+        
+        // Replace the found command with the yellow span
+        html = html.replace(regex, '<span class="cmd">$1</span>');
 
-    // Apply the changed HTML back to the block
-    block.innerHTML = html;
-  });
+        block.innerHTML = html;
+    });
 </script>
 
 </body>
