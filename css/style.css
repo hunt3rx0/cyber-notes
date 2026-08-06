@@ -63,10 +63,12 @@ header {
   font-weight: 400;
 }
 
+/* Update the logo icon size */
 .logo i {
-    color: var(--accent);
-    font-size: 1.5rem; /* Make it slightly bigger than the text */
-    margin-right: 0.2rem;
+    color: var(--accent);       /* Keeps it your bright green */
+    font-size: 2rem;            /* Makes it much bigger */
+    margin-right: 8px;          /* Adds space between the icon and the text */
+    vertical-align: middle;     /* Ensures it sits perfectly centered with your text */
 }
 
 nav {
