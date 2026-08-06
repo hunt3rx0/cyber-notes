@@ -13,7 +13,7 @@
 <body>
   <header>
     <div class="header-inner">
-      <a href="../index.html" class="logo"><i class='bx bx-terminal'></i>  .d4nx0</a>
+      <a href="../index.html" class="logo"><i class='bx bx-terminal'></i><span id="typewriter"></span></a>
       <nav>
         <a href="../index.html">Home</a>
         <a href="../writeups/index.html">Write-ups</a>
@@ -81,5 +81,22 @@ cat /etc/shadow   # if readable</code></pre>
   <footer>
     <p>Personal learning notes</p>
   </footer>
+
+  <script>
+    // Typewriter effect for the logo
+    const text = ".d4nx0";
+    let index = 0;
+
+    function typeWriter() {
+      if (index < text.length) {
+        document.getElementById("typewriter").innerHTML += text.charAt(index);
+        index++;
+        setTimeout(typeWriter, 150);
+      }
+    }
+
+    window.onload = typeWriter;
+  </script>
+  
 </body>
 </html>

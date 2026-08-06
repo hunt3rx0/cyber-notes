@@ -13,7 +13,7 @@
 <body>
   <header>
     <div class="header-inner">
-      <a href="index.html" class="logo"><i class='bx bx-terminal'></i>  .d4nx0</a>
+      <a href="index.html" class="logo"><i class='bx bx-terminal'></i> <span id="typewriter"></span></a>
       <nav>
         <a href="index.html" class="active">Home</a>
         <a href="writeups/index.html">Write-ups</a>
@@ -82,5 +82,23 @@
   <footer>
     <p>Personal learning notes • Static site • Easy to update</p>
   </footer>
+
+  <script>
+    // The name to type out
+    const text = ".d4nx0";
+    let index = 0;
+
+    function typeWriter() {
+      if (index < text.length) {
+        document.getElementById("typewriter").innerHTML += text.charAt(index);
+        index++;
+        setTimeout(typeWriter, 100); // 100ms per letter
+      }
+    }
+
+    // Start the animation
+    window.onload = typeWriter;
+  </script>
+
 </body>
 </html>

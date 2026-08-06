@@ -445,3 +445,13 @@ footer {
     box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     margin: 20px -20%;
 }
+
+#typewriter::after {
+    content: '|';
+    animation: blink 1s step-end infinite;
+    color: var(--accent);
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
