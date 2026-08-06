@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techniques — Cyber Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="../index.html" class="logo">🛡️ Cyber<span>Notes</span></a>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="../writeups/index.html">Write-ups</a>
+        <a href="../commands/index.html">Commands</a>
+        <a href="index.html" class="active">Techniques</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <a href="../index.html" class="back">← Back to Home</a>
+    <h1 class="section-title">Technique Notes</h1>
+    <p class="section-desc">Privilege escalation, attacks, methodology, and more.</p>
+
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search techniques..." onkeyup="filterCards()">
+    </div>
+
+    <div class="cards" id="cards">
+      <a href="linux-privesc.html" class="card" data-title="Linux Privilege Escalation">
+        <h3>Linux Privilege Escalation</h3>
+        <p>Common techniques and checklist for Linux privesc.</p>
+        <div class="meta">
+          <span class="tag">Privesc</span>
+          <span class="tag">Linux</span>
+        </div>
+      </a>
+      <!-- ADD NEW TECHNIQUE NOTES BELOW -->
+    </div>
+  </main>
+
+  <footer>
+    <p>Personal learning notes • Static site</p>
+  </footer>
+
+  <script>
+    function filterCards() {
+      const q = document.getElementById('search').value.toLowerCase();
+      document.querySelectorAll('#cards .card').forEach(card => {
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        card.style.display = title.includes(q) ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

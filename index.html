@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Notes — My Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">🛡️ Cyber<span>Notes</span></a>
+      <nav>
+        <a href="index.html" class="active">Home</a>
+        <a href="writeups/index.html">Write-ups</a>
+        <a href="commands/index.html">Commands</a>
+        <a href="techniques/index.html">Techniques</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>My Cybersecurity Notes</h1>
+      <p>Personal collection of write-ups, useful commands, and techniques. Built for learning and quick reference.</p>
+    </section>
+
+    <div class="cards">
+      <a href="writeups/index.html" class="card">
+        <h3>📝 Write-ups</h3>
+        <p>CTF solutions, HTB/THM machines, bug bounty notes, and engagement write-ups.</p>
+        <div class="meta">
+          <span class="tag">CTF</span>
+          <span class="tag">Machines</span>
+        </div>
+      </a>
+
+      <a href="commands/index.html" class="card">
+        <h3>⌨️ Command Notes</h3>
+        <p>Cheatsheets, one-liners, and frequently used commands for tools and enumeration.</p>
+        <div class="meta">
+          <span class="tag">Nmap</span>
+          <span class="tag">Linux</span>
+          <span class="tag">Windows</span>
+        </div>
+      </a>
+
+      <a href="techniques/index.html" class="card">
+        <h3>🔧 Technique Notes</h3>
+        <p>Privilege escalation, pivoting, web attacks, lateral movement, and methodology.</p>
+        <div class="meta">
+          <span class="tag">Privesc</span>
+          <span class="tag">Web</span>
+        </div>
+      </a>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 3rem;">Recent Notes</h2>
+    <div class="cards" style="margin-top: 1rem;">
+      <a href="writeups/sample-htb-machine.html" class="card">
+        <h3>Sample HTB Machine</h3>
+        <p>Example structure for a full machine write-up. Copy this format.</p>
+        <div class="meta"><span class="tag">Write-up</span><span>Easy</span></div>
+      </a>
+      <a href="commands/nmap-cheatsheet.html" class="card">
+        <h3>Nmap Cheatsheet</h3>
+        <p>Most used Nmap commands and useful flags.</p>
+        <div class="meta"><span class="tag">Commands</span></div>
+      </a>
+      <a href="techniques/linux-privesc.html" class="card">
+        <h3>Linux Privilege Escalation</h3>
+        <p>Common techniques and checklist for Linux privesc.</p>
+        <div class="meta"><span class="tag">Techniques</span></div>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>Personal learning notes • Static site • Easy to update</p>
+  </footer>
+</body>
+</html>

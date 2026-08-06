@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Write-ups — Cyber Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="../index.html" class="logo">🛡️ Cyber<span>Notes</span></a>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="index.html" class="active">Write-ups</a>
+        <a href="../commands/index.html">Commands</a>
+        <a href="../techniques/index.html">Techniques</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <a href="../index.html" class="back">← Back to Home</a>
+    <h1 class="section-title">Write-ups</h1>
+    <p class="section-desc">CTF solutions, machine write-ups, and engagement notes.</p>
+
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search write-ups..." onkeyup="filterCards()">
+    </div>
+
+    <div class="cards" id="cards">
+      <a href="sample-htb-machine.html" class="card" data-title="Sample HTB Machine Write-up">
+        <h3>Sample HTB Machine Write-up</h3>
+        <p>Full example structure you can copy for your own machines.</p>
+        <div class="meta">
+          <span class="tag">HTB</span>
+          <span class="tag">Easy</span>
+          <span>Template</span>
+        </div>
+      </a>
+      <!-- ADD NEW WRITE-UPS BELOW by copying the card above -->
+    </div>
+  </main>
+
+  <footer>
+    <p>Personal learning notes • Static site</p>
+  </footer>
+
+  <script>
+    function filterCards() {
+      const q = document.getElementById('search').value.toLowerCase();
+      document.querySelectorAll('#cards .card').forEach(card => {
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        card.style.display = title.includes(q) ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
