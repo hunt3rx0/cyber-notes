@@ -57,20 +57,42 @@
         card.style.display = title.includes(q) ? 'block' : 'none';
       });
     }
-    // The name to type out
     const text = ".d4nx0";
-    let index = 0;
+      let index = 0;
+      let isDeleting = false;
+      let speed = 100; // Typing speed in milliseconds
 
-    function typeWriter() {
-      if (index < text.length) {
-        document.getElementById("typewriter").innerHTML += text.charAt(index);
-        index++;
-        setTimeout(typeWriter, 100); // 100ms per letter
+      function typeWriter() {
+        const element = document.getElementById("typewriter");
+
+        if (!isDeleting) {
+          // Typing forward
+          element.innerHTML = text.substring(0, index + 1);
+          index++;
+          speed = 100; // Speed while typing
+        } else {
+          // Deleting backward
+          element.innerHTML = text.substring(0, index - 1);
+          index--;
+          speed = 50; // Speed while deleting (faster)
+        }
+
+        // If finished typing the whole word
+        if (!isDeleting && index === text.length) {
+          speed = 2000; // Wait 2 seconds before starting to delete
+          isDeleting = true;
+        } 
+        // If finished deleting
+        else if (isDeleting && index === 0) {
+          isDeleting = false;
+          speed = 500; // Wait half a second before starting to type again
+        }
+
+        setTimeout(typeWriter, speed);
       }
-    }
 
-    // Start the animation
-    window.onload = typeWriter;
+      // Start the animation when the page loads
+      window.onload = typeWriter;
   </script>
 </body>
 </html>
