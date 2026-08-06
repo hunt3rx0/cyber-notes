@@ -49,26 +49,29 @@ header {
 }
 
 .logo {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+    font-size: 1.6rem; /* Increased slightly for better balance */
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-shadow: 0 0 15px rgba(0, 255, 157, 0.3); /* Soft green glow on the text */
 }
 
 .logo span {
-  color: var(--text);
-  font-weight: 400;
+    color: var(--text);
+    font-weight: 400;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.05); /* Very faint white glow on "Notes" */
 }
 
-/* Update the logo icon size */
+/* Update the logo icon (Boxicons Terminal) */
 .logo i {
-    color: var(--accent);       /* Keeps it your bright green */
-    font-size: 2rem;            /* Makes it much bigger */
-    margin-right: 8px;          /* Adds space between the icon and the text */
-    vertical-align: middle;     /* Ensures it sits perfectly centered with your text */
+    color: #00f0ff;             /* Neon Cyan (Matches d4nx0 cyber theme) */
+    font-size: 2.8rem;          /* Big icon */
+    margin-right: 8px;          /* Space between icon and text */
+    vertical-align: middle;
+    text-shadow: 0 0 20px rgba(0, 240, 255, 0.6); /* ⚡ Massive glow on the icon */
 }
 
 nav {
