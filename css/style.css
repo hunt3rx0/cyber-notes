@@ -260,6 +260,12 @@ main {
   font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
 }
 
+/* Make typed commands (lines starting with $ or #) a distinct lower color */
+.note-content pre code .command,
+.note-content pre code .cmd {
+    color: #58a6ff; /* Light blue / bright cyan - great for dark mode */
+}
+
 /* Callouts */
 .callout {
   border-left: 4px solid var(--info);
