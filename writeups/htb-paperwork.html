@@ -110,8 +110,7 @@ s.close()</code></pre>
       <pre><code>python3 exploit.py</code></pre>
       
       <p>Gain access as the <code>lp</code> user:</p>
-      <pre><code>Listening on 0.0.0.0 4444
-Connection received on &lt;target-ip&gt; 50920
+      <pre><code>
 lp@paperwork:/opt/LPDServer$ id
 uid=7(lp) gid=7(lp) groups=7(lp)</code></pre>
 
@@ -208,7 +207,6 @@ s.close()</code></pre>
 
       <p>Execute the script to leak the password:</p>
       <pre><code>python3 leakfd.py
-
 # [+] Leaked FD 5 content: ADMIN_PASSWORD=&lt;password&gt;</code></pre>
 
       <p>Switch to <code>root</code>:</p>
