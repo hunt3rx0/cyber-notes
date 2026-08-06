@@ -28,13 +28,14 @@
 
     <div class="note-header">
       <h1>Paperwork</h1>
-      <div class="note-meta">
-        <span>Platform: HackTheBox (HTB Season 11 Week #8)</span>
-        <span>Difficulty: Easy</span>
-        <span>OS: Linux</span>
-        <span class="tag">LPE</span>
-        <span class="tag">SCM_RIGHTS</span>
-      </div>
+        <div class="note-meta">
+            <span>HTB Season 11 Week #8</span>
+            <span>Machine Paperwork</span>
+            <span>OS Linux</span>
+            <span>Difficulty Easy</span>
+            <span>LPE</span>
+            <span>SCM_RIGHTS</span>
+        </div>
     </div>
 
     <div class="note-content">
@@ -244,7 +245,7 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
     html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
 
     // 2. Find lines starting with common Linux commands and color them
-    html = html.replace(/^(wget|unzip|python3|sudo|nmap|ssh|rustscan|gobuster|curl|nc|echo|cat|cd|mkdir|cp|mv|rm|chmod|chown|find|grep|awk|sed|tar|scp|systemctl|su|exit|whoami|id|ls|ping|traceroute|dig|host|ps|kill|pwd|touch|ln|read|exec|bash|sh|zsh|set|export|alias|clear)\b/gm, '<span class="cmd">$1</span>');
+    html = html.replace(/^(wget|unzip|python3|sudo|nmap|ssh|ssh-keygen|rustscan|gobuster|curl|nc|echo|cat|cd|mkdir|cp|mv|rm|chmod|chown|find|grep|awk|sed|tar|scp|systemctl|su|exit|whoami|id|ls|ping|traceroute|dig|host|ps|kill|pwd|touch|ln|read|exec|bash|sh|zsh|set|export|alias|clear)\b/gm, '<span class="cmd">$1</span>');
 
     // Apply the changed HTML back to the block
     block.innerHTML = html;

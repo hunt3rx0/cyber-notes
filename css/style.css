@@ -191,11 +191,29 @@ main {
 }
 
 .note-meta {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.note-meta span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.note-meta .pill {
+    color: var(--text);
+    font-weight: 400;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+.note-meta span::before {
+    content: "[+] "; /* Adds a terminal bracket before every label */
+    color: var(--accent);
 }
 
 .note-content {
