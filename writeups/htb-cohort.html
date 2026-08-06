@@ -73,21 +73,21 @@
       
       <!-- Image Placeholder -->
       <div class="note-image">
-          <img src="../src/image/Pasted image 20260803230024.png" alt="Cohort Main Page Dashboard" onclick="openLightbox(this)">
+          <img src="../src/image/Pasted image 20260803230024.png" alt="Cohort Main Page Dashboard" onclick="toggleZoom(this)">
       </div>
       <br>
       
       <p>Navigating to <strong>Client Insights</strong> reveals a URL validation feature.</p>
       <!-- Image Placeholder -->
       <div class="note-image">
-          <img src="../src/image/Pasted image 20260803230216.png" alt="Client Insights URL Validation" onclick="openLightbox(this)">
+          <img src="../src/image/Pasted image 20260803230216.png" alt="Client Insights URL Validation" onclick="toggleZoom(this)">
       </div>
 
       <p>Testing various URLs confirmed it is vulnerable to <strong>SSRF</strong>. By using the discovered <code>/status</code> endpoint (which returned a 403 earlier) as a JSON payload in the Source URL input, the server responded.</p>
 
       <!-- Image Placeholder -->
       <div class="note-image">
-        <img src="../src/image/Pasted image 20260803231255.png" alt="SSRF Response Leaking Internal Info" onclick="openLightbox(this)">
+        <img src="../src/image/Pasted image 20260803231255.png" alt="SSRF Response Leaking Internal Info" onclick="toggleZoom(this)">
       </div>
 
       <div class="callout warning">
@@ -112,7 +112,7 @@
 
       <!-- Image Placeholder -->
       <div class="note-image">
-          <img src="../src/image/Pasted image 20260803232557.png" alt="API Version Disclosure" onclick="openLightbox(this)">
+          <img src="../src/image/Pasted image 20260803232557.png" alt="API Version Disclosure" onclick="toggleZoom(this)">
       </div>
 
       <div class="callout warning">
