@@ -375,3 +375,38 @@ footer {
     justify-content: center;
   }
 }
+
+/* --- Code Copy Button --- */
+.note-content pre {
+    position: relative;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'Oxanium', sans-serif;
+    opacity: 0.4;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    z-index: 10; /* Ensures it sits on top */
+}
+
+.copy-btn:hover {
+    opacity: 1;
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.copy-btn.copied {
+    background: rgba(0, 255, 157, 0.2);
+    color: var(--accent);
+    border-color: var(--accent);
+    opacity: 1;
+}

@@ -254,6 +254,35 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
 
         block.innerHTML = html;
     });
+    
+    // This automatically finds every <pre> tag and adds a button to it
+    document.querySelectorAll('.note-content pre').forEach(pre => {
+        // 1. Create the button
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerText = 'Copy';
+
+        // 2. Add the click event to the button
+        btn.addEventListener('click', () => {
+        // Get the code text inside this specific <pre>
+        const code = pre.querySelector('code');
+        const text = code.innerText;
+
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            btn.classList.add('copied');
+            
+            setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.remove('copied');
+            }, 2000);
+        });
+        });
+
+        // 3. Insert the button into the page, right inside the <pre> tag at the top right
+        pre.appendChild(btn);
+    });
 </script>
 
 </body>
