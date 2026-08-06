@@ -446,6 +446,12 @@ footer {
     margin: 20px -20%;
 }
 
+/* The color of the typed name */
+#typewriter {
+    color: #00ff9d; /* Change this hex code to pick your color! */
+}
+
+/* The blinking cursor */
 #typewriter::after {
     content: '|';
     animation: blink 1s step-end infinite;
