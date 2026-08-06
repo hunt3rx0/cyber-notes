@@ -413,16 +413,12 @@ footer {
 
 /* --- Image Zoom / Lightbox --- */
 /* Styles the small image on the page */
+/* Styles the small image on the page */
 .note-image img {
     max-width: 100%;
     border-radius: 8px;
     border: 1px solid var(--border);
-    cursor: pointer; /* Shows a 'hand' cursor so users know it's clickable */
-    transition: transform 0.2s ease;
-}
-
-.note-image img:hover {
-    transform: scale(1.01); /* Slight grow effect on hover */
+    cursor: pointer; /* Shows the hand cursor so users know it's clickable */
 }
 
 /* The Lightbox (hidden by default) */
