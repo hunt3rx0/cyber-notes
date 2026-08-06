@@ -275,28 +275,32 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
         pre.appendChild(btn);
     });
 
-    // Get the modal and the image
+    // IMAGE ZOOM LIGHTBOX SCRIPT
     var lightbox = document.getElementById("imageLightbox");
     var zoomedImg = document.getElementById("zoomedImage");
     var closeBtn = document.getElementsByClassName("close")[0];
 
-    // Function to open the lightbox when an image is clicked
     function openLightbox(imgElement) {
         lightbox.style.display = "block";
-        zoomedImg.src = imgElement.src; // Set the big image source to the clicked image's source
+        zoomedImg.src = imgElement.src; 
     }
 
-    // Close the lightbox when the 'X' is clicked
     closeBtn.onclick = function() { 
         lightbox.style.display = "none";
     }
 
-    // Close the lightbox if the user clicks anywhere on the dark background
     lightbox.onclick = function(event) {
         if (event.target == lightbox) {
             lightbox.style.display = "none";
         }
     }
   </script>
+
+  <!-- IMAGE LIGHTBOX HTML -->
+    <div id="imageLightbox" class="lightbox">
+    <span class="close">&times;</span>
+    <img class="lightbox-content" id="zoomedImage" src="" alt="Zoomed Image">
+  </div>
+  
 </body>
 </html>

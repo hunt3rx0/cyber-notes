@@ -412,16 +412,19 @@ footer {
 }
 
 /* --- Image Zoom / Lightbox --- */
-/* Styles the small image on the page */
-/* Styles the small image on the page */
 .note-image img {
     max-width: 100%;
     border-radius: 8px;
     border: 1px solid var(--border);
-    cursor: pointer; /* Shows the hand cursor so users know it's clickable */
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
-/* The Lightbox (hidden by default) */
+.note-image img:hover {
+    transform: scale(1.01);
+}
+
+/* The Clean Lightbox */
 .lightbox {
     display: none;
     position: fixed;
@@ -430,37 +433,38 @@ footer {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9); /* Dark overlay */
+    background-color: rgba(255, 255, 255, 0.92); /* Soft white/light grey overlay */
     overflow: auto;
     text-align: center;
-    padding-top: 50px;
+    padding: 30px;
+    box-sizing: border-box;
 }
 
-/* The Big Zoomed Image inside the lightbox */
+/* The Big Zoomed Image */
 .lightbox-content {
-    max-width: 90%;
-    max-height: 85vh; /* Prevent it from going off-screen vertically */
+    max-width: 95%;
+    max-height: 90vh;
     margin: auto;
     display: block;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15); /* Soft shadow like Medium */
 }
 
-/* The Close Button (X) */
+/* The Close Button */
 .lightbox .close {
-    position: absolute;
-    top: 20px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
+    position: fixed;
+    top: 25px;
+    right: 40px;
+    color: #555;
+    font-size: 45px;
+    font-weight: 300;
     transition: 0.3s;
     cursor: pointer;
+    line-height: 1;
 }
 
 .lightbox .close:hover,
 .lightbox .close:focus {
-    color: #bbb;
-    text-decoration: none;
-    cursor: pointer;
+    color: #000;
+    transform: rotate(90deg); /* A cool subtle animation when hovering X */
 }
