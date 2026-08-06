@@ -276,31 +276,18 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
     });
 
     // IMAGE ZOOM LIGHTBOX SCRIPT
-    var lightbox = document.getElementById("imageLightbox");
-    var zoomedImg = document.getElementById("zoomedImage");
-    var closeBtn = document.getElementsByClassName("close")[0];
-
-    function openLightbox(imgElement) {
-        lightbox.style.display = "block";
-        zoomedImg.src = imgElement.src; 
-    }
-
-    closeBtn.onclick = function() { 
-        lightbox.style.display = "none";
-    }
-
-    lightbox.onclick = function(event) {
-        if (event.target == lightbox) {
-            lightbox.style.display = "none";
-        }
+    function toggleZoom(imgElement) {
+      // Toggle the 'expanded' class on the clicked image
+      imgElement.classList.toggle("expanded");
+            
+      // If the image is expanding, scroll to it so the user sees the full picture
+      if (imgElement.classList.contains("expanded")) {
+        setTimeout(() => {
+          imgElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
     }
   </script>
 
-  <!-- IMAGE LIGHTBOX HTML -->
-    <div id="imageLightbox" class="lightbox">
-    <span class="close">&times;</span>
-    <img class="lightbox-content" id="zoomedImage" src="" alt="Zoomed Image">
-  </div>
-  
 </body>
 </html>
