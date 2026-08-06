@@ -244,7 +244,7 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
     html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
 
     // 2. Find lines starting with common Linux commands and color them
-    html = html.replace(/^(wget|unzip|python3|sudo|nmap|ssh|rustscan|gobuster|curl|nc|echo|cat|cd|mkdir|cp|mv|rm|chmod|chown|find|grep|awk|sed|tar|scp|systemctl|su|exit|whoami|id|ls|ping|traceroute|dig|host|ps|kill|pwd|touch|ln|read|exec|bash|sh|zsh|set|export|alias|clear) \b/gm, '<span class="cmd">$1</span>');
+    html = html.replace(/^(wget|unzip|python3|sudo|nmap|ssh|rustscan|gobuster|curl|nc|echo|cat|cd|mkdir|cp|mv|rm|chmod|chown|find|grep|awk|sed|tar|scp|systemctl|su|exit|whoami|id|ls|ping|traceroute|dig|host|ps|kill|pwd|touch|ln|read|exec|bash|sh|zsh|set|export|alias|clear)\b/gm, '<span class="cmd">$1</span>');
 
     // Apply the changed HTML back to the block
     block.innerHTML = html;
