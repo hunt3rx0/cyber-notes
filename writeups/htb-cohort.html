@@ -28,13 +28,11 @@
     <div class="note-header">
       <h1>Cohort</h1>
       <div class="note-meta">
-        <div class="row">HTB Season 11 Week <span class="highlight">#11</span></div>
-        <div class="row">Machine <span class="highlight">Cohort</span></div>
-        <div class="row">OS <span class="highlight">Linux</span></div>
-        <div class="row">Difficulty <span class="highlight">Easy</span></div>
-        <div class="row"><span class="highlight">SSRF</span></div>
-        <div class="row"><span class="highlight">RCE</span></div>
-        <div class="row"><span class="highlight">PrivEsc</span></div>
+        <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#11</span></div>
+        <div class="row"> Machine <span class="highlight">Cohort</span></div>
+        <div class="row"> OS <span class="highlight">Linux</span></div>
+        <div class="row"> Difficulty <span class="highlight">Easy</span></div>
+        <div class="row"> Vulnerabilities <span class="highlight">SSRF </span> <span class="highlight">RCE </span> <span class="highlight">CVE-2026-39987 </span> <span class="highlight">CVE-2026-41651</span></div>
       </div>
     </div>
 
@@ -75,21 +73,21 @@
       
       <!-- Image Placeholder -->
       <div class="note-image">
-        <img src="../src/image/Pasted image 20260803230024.png" alt="Cohort Main Page Dashboard" style="max-width:100%; border-radius: 8px; border: 1px solid var(--border);">
+          <img src="../src/image/Pasted image 20260803230024.png" alt="Cohort Main Page Dashboard" onclick="openLightbox(this)">
       </div>
       <br>
       
       <p>Navigating to <strong>Client Insights</strong> reveals a URL validation feature.</p>
       <!-- Image Placeholder -->
       <div class="note-image">
-        <img src="../src/image/Pasted image 20260803230216.png" alt="Client Insights URL Validation" style="max-width:100%; border-radius: 8px; border: 1px solid var(--border);">
+          <img src="../src/image/Pasted image 20260803230216.png" alt="Client Insights URL Validation" onclick="openLightbox(this)">
       </div>
 
       <p>Testing various URLs confirmed it is vulnerable to <strong>SSRF</strong>. By using the discovered <code>/status</code> endpoint (which returned a 403 earlier) as a JSON payload in the Source URL input, the server responded.</p>
 
       <!-- Image Placeholder -->
       <div class="note-image">
-        <img src="../src/image/Pasted image 20260803231255.png" alt="SSRF Response Leaking Internal Info" style="max-width:100%; border-radius: 8px; border: 1px solid var(--border);">
+        <img src="../src/image/Pasted image 20260803231255.png" alt="SSRF Response Leaking Internal Info" onclick="openLightbox(this)">
       </div>
 
       <div class="callout warning">
@@ -114,7 +112,7 @@
 
       <!-- Image Placeholder -->
       <div class="note-image">
-        <img src="../src/image/Pasted image 20260803232557.png" alt="API Version Disclosure" style="max-width:100%; border-radius: 8px; border: 1px solid var(--border);">
+          <img src="../src/image/Pasted image 20260803232557.png" alt="API Version Disclosure" onclick="openLightbox(this)">
       </div>
 
       <div class="callout warning">
@@ -227,7 +225,7 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
     <p>Personal learning notes</p>
   </footer>
 
-  <!-- === COMBINED SCRIPTS (Copy Button & Syntax Highlighting) === -->
+  <!-- === COMBINED SCRIPTS (Copy Button & Syntax Highlighting & Image Lightbox) === -->
   <script>
     document.querySelectorAll('.note-content pre code').forEach(block => {
         let html = block.innerHTML;
@@ -276,6 +274,29 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
         // 3. Insert the button into the page, right inside the <pre> tag at the top right
         pre.appendChild(btn);
     });
+
+    // Get the modal and the image
+    var lightbox = document.getElementById("imageLightbox");
+    var zoomedImg = document.getElementById("zoomedImage");
+    var closeBtn = document.getElementsByClassName("close")[0];
+
+    // Function to open the lightbox when an image is clicked
+    function openLightbox(imgElement) {
+        lightbox.style.display = "block";
+        zoomedImg.src = imgElement.src; // Set the big image source to the clicked image's source
+    }
+
+    // Close the lightbox when the 'X' is clicked
+    closeBtn.onclick = function() { 
+        lightbox.style.display = "none";
+    }
+
+    // Close the lightbox if the user clicks anywhere on the dark background
+    lightbox.onclick = function(event) {
+        if (event.target == lightbox) {
+            lightbox.style.display = "none";
+        }
+    }
   </script>
 </body>
 </html>
