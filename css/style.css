@@ -260,10 +260,15 @@ main {
   font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
 }
 
-/* Make typed commands (lines starting with $ or #) a distinct lower color */
-.note-content pre code .command,
 .note-content pre code .cmd {
-    color: #58a6ff; /* Light blue / bright cyan - great for dark mode */
+    color: #e5c07b; /* Yellow for commands */
+}
+.note-content pre code .comment {
+    color: #8b949e; /* Grey for comments */
+    font-style: italic;
+}
+.note-content pre code {
+    color: var(--text); /* White for standard output */
 }
 
 /* Callouts */
