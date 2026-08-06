@@ -69,12 +69,12 @@
           // Typing forward
           element.innerHTML = text.substring(0, index + 1);
           index++;
-          speed = 100; // Speed while typing
+          speed = 200; // Speed while typing
         } else {
           // Deleting backward
           element.innerHTML = text.substring(0, index - 1);
           index--;
-          speed = 50; // Speed while deleting (faster)
+          speed = 100; // Speed while deleting (faster)
         }
 
         // If finished typing the whole word
