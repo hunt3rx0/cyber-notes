@@ -201,28 +201,76 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
       let html = block.innerHTML;
       html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
       const commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','traceroute','dig','host','ps','kill','pwd','touch','ln','read','exec','bash','sh','zsh','set','export','alias','clear','git','pip','dpkg','ip'];
-      const regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      const regex = new RegExp('\b(' + commands.join('|') + ')\b(?= |$)', 'gm');
       html = html.replace(regex, '<span class="cmd">$1</span>');
       block.innerHTML = html;
     });
-    // Copy buttons on pre blocks
-    document.querySelectorAll('.note-content pre').forEach(pre => {
-      if (pre.querySelector('.copy-btn')) return;
-      const btn = document.createElement('button');
-      btn.className = 'copy-btn';
+
+
+    // Convert <pre><code> into cmd-block cards (match commands page style)
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.dataset.converted === '1') return;
+      var codeEl = pre.querySelector('code');
+      if (!codeEl) return;
+      var rawText = codeEl.innerText.replace(/\n$/, '');
+      var lines = rawText.split(/\n/);
+      var multiline = lines.length > 2
+        || /^(import |from |def |class |TARGET |HOST |SOCK_|payload |url )/m.test(rawText);
+
+      var block = document.createElement('div');
+      block.className = 'cmd-block';
+
+      var label = document.createElement('div');
+      label.className = 'cmd-block-label';
+      var labelText = 'command';
+      if (multiline) {
+        if (/^import |^from |^def |python/i.test(rawText)) labelText = 'python';
+        else if (/^#!/.test(rawText)) labelText = 'script';
+        else labelText = 'code';
+      } else {
+        var first = lines[0].trim();
+        labelText = first.length > 48 ? first.slice(0, 48) + '...' : (first || 'command');
+      }
+      label.textContent = labelText;
+
+      var body = document.createElement('div');
+      body.className = 'cmd-block-body' + (multiline ? ' multiline' : '');
+
+      if (!multiline) {
+        var prompt = document.createElement('span');
+        prompt.className = 'prompt';
+        prompt.textContent = '$';
+        body.appendChild(prompt);
+      }
+
+      var code = document.createElement('code');
+      code.innerHTML = codeEl.innerHTML;
+      body.appendChild(code);
+
+      var btn = document.createElement('button');
       btn.type = 'button';
-      btn.innerText = 'Copy';
-      btn.addEventListener('click', () => {
-        const code = pre.querySelector('code');
-        const text = code ? code.innerText : pre.innerText;
-        navigator.clipboard.writeText(text).then(() => {
-          btn.innerText = 'Copied!';
+      btn.className = 'copy-btn';
+      btn.setAttribute('aria-label', 'Copy');
+      btn.innerHTML = '<i class="bx bx-copy"></i>';
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        navigator.clipboard.writeText(rawText).then(function () {
+          btn.innerHTML = '<i class="bx bx-check"></i>';
           btn.classList.add('copied');
-          setTimeout(() => { btn.innerText = 'Copy'; btn.classList.remove('copied'); }, 2000);
+          setTimeout(function () {
+            btn.innerHTML = '<i class="bx bx-copy"></i>';
+            btn.classList.remove('copied');
+          }, 1600);
         });
       });
-      pre.appendChild(btn);
+      body.appendChild(btn);
+
+      block.appendChild(label);
+      block.appendChild(body);
+      pre.dataset.converted = '1';
+      pre.replaceWith(block);
     });
+
     function toggleZoom(img) {
       img.classList.toggle('expanded');
       if (img.classList.contains('expanded')) {
