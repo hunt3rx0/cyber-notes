@@ -752,29 +752,78 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 
-/* Writeup code blocks — simple, clean */
+/* Writeup code blocks — original simple style */
+.note-content .code-wrap {
+  position: relative;
+  margin: 1rem 0;
+}
+.note-content .code-wrap > button.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  opacity: 0.45;
+  line-height: 1.2;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.note-content .code-wrap > button.copy-btn:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.note-content .code-wrap > button.copy-btn.copied {
+  opacity: 1;
+  background: rgba(0, 255, 157, 0.15);
+  color: var(--green);
+  border-color: var(--green);
+}
+.note-content .code-wrap > button.copy-btn i {
+  font-size: 0.95rem;
+  pointer-events: none;
+}
 .note-content pre {
   position: relative;
-  display: block;
   background: var(--code-bg, #0a1018);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1rem 2.75rem 1rem 1rem;
+  padding: 1rem;
+  padding-right: 3rem;
   overflow-x: auto;
-  margin: 1rem 0;
+  margin: 0;
 }
 .note-content pre code {
   background: none;
   padding: 0;
   color: var(--text);
-  font-size: 0.85rem;
-  line-height: 1.55;
+  font-size: 0.9rem;
+  line-height: 1.5;
   display: block;
   white-space: pre;
   font-family: var(--font-mono);
 }
-.note-content pre code .cmd { color: #e5c07b; }
-.note-content pre code .comment { color: #8b949e; font-style: italic; }
+.note-content pre code .cmd {
+  color: #e5c07b;
+}
+.note-content pre code .comment {
+  color: #8b949e;
+  font-style: italic;
+}
+.note-content code {
+  background: var(--code-bg, #0a1018);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--green);
+}
 .note-content pre code .ph,
 .note-content .ph {
   color: #ff6b6b !important;
@@ -784,34 +833,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-weight: 600;
   border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
 }
-.note-content pre > button.copy-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-muted);
-  border-radius: 4px;
-  padding: 0.2rem 0.35rem;
-  cursor: pointer;
-  line-height: 1;
-  opacity: 0.55;
-  z-index: 5;
-}
-.note-content pre > button.copy-btn:hover {
-  opacity: 1;
-  color: var(--cyan);
-  border-color: var(--border);
-  background: rgba(0, 229, 255, 0.06);
-}
-.note-content pre > button.copy-btn.copied {
-  opacity: 1;
-  color: var(--green);
-}
-.note-content pre > button.copy-btn i {
-  font-size: 1.05rem;
-  pointer-events: none;
-}
+
 
 .callout {
   border-left: 4px solid #38bdf8;

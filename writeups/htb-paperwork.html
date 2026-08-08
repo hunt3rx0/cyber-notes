@@ -217,39 +217,44 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
   <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
   <script src="../js/app.js"></script>
   <script>
-    // Syntax highlight + simple copy on <pre> (no cmd-block conversion)
+    // Original-style: highlight comments/commands + Copy button (pinned via code-wrap)
     document.querySelectorAll('.note-content pre code').forEach(function (block) {
       var html = block.innerHTML;
       html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
-      var commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','sshpass','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','ps','kill','pwd','touch','bash','sh','git','pip','nano','wpscan','ss'];
+      var commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','sshpass','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','ps','kill','pwd','touch','bash','sh','git','pip','nano','wpscan','ss','ip'];
       var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
       html = html.replace(regex, '<span class="cmd">$1</span>');
       block.innerHTML = html;
     });
 
     document.querySelectorAll('.note-content pre').forEach(function (pre) {
-      if (pre.querySelector('button.copy-btn')) return;
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn';
-      btn.setAttribute('aria-label', 'Copy');
-      btn.innerHTML = '<i class="bx bx-copy"></i>';
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
         var code = pre.querySelector('code');
         var text = code ? code.innerText : pre.innerText;
         navigator.clipboard.writeText(text).then(function () {
-          btn.innerHTML = '<i class="bx bx-check"></i>';
+          var original = btn.textContent;
+          btn.textContent = 'Copied!';
           btn.classList.add('copied');
           setTimeout(function () {
-            btn.innerHTML = '<i class="bx bx-copy"></i>';
+            btn.textContent = original;
             btn.classList.remove('copied');
-          }, 1600);
+          }, 2000);
         });
       });
-      pre.appendChild(btn);
+      wrap.appendChild(btn);
     });
+
+
 
 
 
