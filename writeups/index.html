@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Writeups — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <div class="page-header">
+          <div class="section-label">// WRITEUPS</div>
+          <h1>Post-engagement &amp; CTF notes</h1>
+          <p>Tagged by OS and difficulty. Click any card for the full walkthrough.</p>
+        </div>
+        <div class="search-wrap">
+          <i class="bx bx-search"></i>
+          <input type="search" id="search" placeholder="Search writeups, tags, OS..." />
+        </div>
+        <div class="note-grid">
+          <a href="htb-forge.html" class="note-card" data-search="htb forge ssrf root linux medium python pdb">
+            <h3>HTB: Forge — SSRF to Root</h3>
+            <p>Server-side request forgery to internal services, Python debugger abuse, and path to root.</p>
+            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">MEDIUM</span><span class="tag muted">SSRF</span><span class="tag muted">PYTHON</span></div>
+          </a>
+          <a href="thm-internal.html" class="note-card" data-search="thm internal wordpress jenkins pivot linux hard">
+            <h3>THM: Internal — Wordpress to Jenkins Pivot</h3>
+            <p>WordPress foothold, credential reuse into Jenkins, and internal network pivot.</p>
+            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">HARD</span><span class="tag muted">WORDPRESS</span><span class="tag muted">JENKINS</span></div>
+          </a>
+          <a href="s3-takeover.html" class="note-card" data-search="cloud dangling s3 subdomain takeover aws easy">
+            <h3>Cloud: Dangling S3 Subdomain Takeover</h3>
+            <p>Identifying dangling CNAME to S3 and claiming the bucket for subdomain takeover.</p>
+            <div class="tags"><span class="tag">CLOUD</span><span class="tag amber">EASY</span><span class="tag muted">AWS</span><span class="tag muted">S3</span></div>
+          </a>
+          <a href="htb-cohort.html" class="note-card" data-search="htb cohort ssrf websocket linux easy packagekit">
+            <h3>Cohort HTB Machine</h3>
+            <p>SSRF leaking internal API, RCE via WebSocket, PackageKit privilege escalation.</p>
+            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">EASY</span><span class="tag muted">HTB</span><span class="tag muted">SSRF</span></div>
+          </a>
+          <a href="htb-paperwork.html" class="note-card" data-search="htb paperwork lpd scm_rights linux easy">
+            <h3>Paperwork HTB Machine</h3>
+            <p>RCE via LPD command injection, path traversal to SSH key, SCM_RIGHTS FD leak to root.</p>
+            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">EASY</span><span class="tag muted">HTB</span><span class="tag muted">LPD</span></div>
+          </a>
+        </div>
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+</body>
+</html>

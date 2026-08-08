@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Subdomain Takeover — .d4nx0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="../writeups/index.html" class="nav-link"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to techniques</a>
+        <header class="detail-header">
+          <h1>Subdomain Takeover</h1>
+          <div class="tags" style="margin-bottom:0.75rem"><span class="tag">RECON</span><span class="tag muted">AWS</span><span class="tag muted">MITRE T1584</span></div>
+          <p class="meta">Detecting dangling DNS records and claiming cloud resources.</p>
+        </header>
+        <div class="detail-body">
+          <h2>Overview</h2>
+          <p>Methodology for finding dangling CNAMEs (S3, Azure, GitHub Pages, etc.) and safe verification before claiming.</p>
+        </div>
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+</body>
+</html>
