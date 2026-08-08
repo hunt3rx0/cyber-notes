@@ -72,15 +72,15 @@
           <h3>Web Enumeration</h3>
           <p>Access the website using HTTPS. The main page shows a dashboard with a "Client Insights" feature.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-dashboard.png" alt="Cohort Main Page Dashboard" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort/cohort-1.png" alt="Cohort Main Page Dashboard" onclick="toggleZoom(this)">
           </div>
           <p>Navigating to <strong>Client Insights</strong> reveals a URL validation feature.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-client-insights.png" alt="Client Insights URL Validation" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort/cohort-2.png" alt="Client Insights URL Validation" onclick="toggleZoom(this)">
           </div>
           <p>Testing various URLs confirmed it is vulnerable to <strong>SSRF</strong>. By using the discovered <code>/status</code> endpoint (which returned a 403 earlier) as a JSON payload in the Source URL input, the server responded.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-ssrf-leak.png" alt="SSRF Response Leaking Internal Info" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort/cohort-3.png" alt="SSRF Response Leaking Internal Info" onclick="toggleZoom(this)">
           </div>
           <div class="callout warning">
             <strong>⚠️ Critical Information Leaked</strong>
@@ -100,7 +100,7 @@
           <h3>API Enumeration</h3>
           <p>Fuzzing the leaked internal API (<code>http://127.0.0.1:5000</code>) and the Notebook service (<code>http://127.0.0.1:8888</code>) revealed the API version.</p>
           <div class="note-image">
-            <img src="../src/images/cohort-api-version.png" alt="API Version Disclosure" onclick="toggleZoom(this)">
+            <img src="../src/images/cohort/cohort-4.png" alt="API Version Disclosure" onclick="toggleZoom(this)">
           </div>
           <div class="callout warning">
             <strong>⚠️ API Version Disclosure</strong>

@@ -516,11 +516,45 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin-bottom: 0.85rem;
 }
 .cmd-block-label {
-  padding: 0.45rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.75rem 0.45rem 1rem;
   border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  min-height: 2rem;
+}
+.cmd-block-label .label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.cmd-block-label .copy-btn {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  padding: 0.15rem 0.35rem;
+  line-height: 1;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.cmd-block-label .copy-btn:hover {
+  color: var(--cyan);
+  border-color: var(--border);
+  background: rgba(0, 229, 255, 0.06);
+}
+.cmd-block-label .copy-btn.copied {
+  color: var(--green);
+}
+.cmd-block-label .copy-btn i {
+  font-size: 1.05rem;
+  pointer-events: none;
 }
 .cmd-block-body {
   padding: 0.85rem 1rem;
@@ -529,6 +563,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  /* copy button lives in the label — code area stays clean */
 }
 .cmd-block-body .prompt { color: var(--green); flex-shrink: 0; }
 .cmd-block-body code {
@@ -561,6 +596,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   text-shadow: none;
   line-height: 1.55;
   font-size: 0.85rem;
+  display: block;
+  width: 100%;
 }
 .cmd-block-body.multiline code .cmd { color: #e5c07b; }
 .cmd-block-body.multiline code .comment { color: #8b949e; font-style: italic; }
@@ -650,6 +687,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
 }
 
+
 /* ===== Writeup / note content ===== */
 .note-header {
   margin-bottom: 1.75rem;
@@ -658,7 +696,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .note-header h1 {
   font-size: 1.75rem;
-  color: var(--cyan) !important;
+  color: var(--cyan);
   margin: 0.35rem 0 0.75rem;
 }
 .note-meta {
@@ -667,9 +705,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 0.35rem;
   font-size: 0.9rem;
 }
-.note-meta .row {
-  color: var(--text-muted);
-}
+.note-meta .row { color: var(--text-muted); }
 .note-meta .row::before {
   content: "[+] ";
   color: var(--green);
@@ -678,22 +714,20 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-family: var(--font-mono);
 }
 .note-meta .highlight {
-  color: var(--green) !important;
+  color: var(--green);
   font-weight: 600;
 }
 
-.note-content {
-  max-width: 820px;
-}
+.note-content { max-width: 820px; }
 .note-content h2 {
-  color: var(--cyan) !important;
+  color: var(--cyan);
   margin: 2rem 0 0.75rem;
   font-size: 1.25rem;
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.3rem;
 }
 .note-content h3 {
-  color: var(--cyan-dim) !important;
+  color: var(--cyan-dim);
   margin: 1.4rem 0 0.5rem;
   font-size: 1.05rem;
 }
@@ -703,19 +737,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   line-height: 1.65;
 }
 .note-content ul,
-.note-content ol {
-  margin: 0 0 1rem 1.4rem;
-}
-.note-content li {
-  margin-bottom: 0.35rem;
-  color: var(--text);
-}
-.note-content a {
-  color: var(--cyan);
-}
-.note-content a:hover {
-  text-decoration: underline;
-}
+.note-content ol { margin: 0 0 1rem 1.4rem; }
+.note-content li { margin-bottom: 0.35rem; color: var(--text); }
+.note-content a { color: var(--cyan); }
+.note-content a:hover { text-decoration: underline; }
 
 .note-content code {
   background: var(--code-bg, #0a1018);
@@ -726,104 +751,94 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   color: var(--green);
 }
 
-.note-content pre {
-  position: relative !important;
-  display: block;
-  background: var(--code-bg, #0a1018) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px;
-  padding: 0 !important;
-  overflow: visible !important; /* do not clip the Copy button */
-  margin: 1rem 0 !important;
-}
 
+/* Writeup code blocks — simple, clean */
+.note-content pre {
+  position: relative;
+  display: block;
+  background: var(--code-bg, #0a1018);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 2.75rem 1rem 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
 .note-content pre code {
-  background: none !important;
-  padding: 1rem !important;
-  padding-right: 4.5rem !important;
-  color: var(--text) !important;
+  background: none;
+  padding: 0;
+  color: var(--text);
   font-size: 0.85rem;
   line-height: 1.55;
   display: block;
   white-space: pre;
-  overflow-x: auto; /* scroll long lines inside code, not pre */
   font-family: var(--font-mono);
-  box-sizing: border-box;
 }
-
-.note-content pre code .cmd {
-  color: #e5c07b !important;
+.note-content pre code .cmd { color: #e5c07b; }
+.note-content pre code .comment { color: #8b949e; font-style: italic; }
+.note-content pre code .ph,
+.note-content .ph {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.12);
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+  font-weight: 600;
+  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
 }
-.note-content pre code .comment {
-  color: #8b949e !important;
-  font-style: italic;
+.note-content pre > button.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.55;
+  z-index: 5;
+}
+.note-content pre > button.copy-btn:hover {
+  opacity: 1;
+  color: var(--cyan);
+  border-color: var(--border);
+  background: rgba(0, 229, 255, 0.06);
+}
+.note-content pre > button.copy-btn.copied {
+  opacity: 1;
+  color: var(--green);
+}
+.note-content pre > button.copy-btn i {
+  font-size: 1.05rem;
+  pointer-events: none;
 }
 
 .callout {
-  border-left: 4px solid #38bdf8 !important;
-  background: rgba(56, 189, 248, 0.08) !important;
-  padding: 0.9rem 1.1rem !important;
-  margin: 1rem 0 !important;
+  border-left: 4px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0;
   border-radius: 0 8px 8px 0;
   display: block;
 }
 .callout.warning {
-  border-left-color: var(--amber) !important;
-  background: rgba(251, 191, 36, 0.08) !important;
+  border-left-color: var(--amber);
+  background: rgba(251, 191, 36, 0.08);
 }
 .callout.danger {
-  border-left-color: #ff6b6b !important;
-  background: rgba(255, 107, 107, 0.08) !important;
+  border-left-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
 }
 .callout.info {
-  border-left-color: #38bdf8 !important;
-  background: rgba(56, 189, 248, 0.08) !important;
+  border-left-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
 }
 .callout strong {
   display: block;
   margin-bottom: 0.35rem;
   color: var(--text);
 }
-.callout pre {
-  margin: 0.5rem 0 0 !important;
-}
-
-.note-content pre > button.copy-btn,
-.note-content pre button.copy-btn {
-  position: absolute !important;
-  top: 0.5rem !important;
-  right: 0.5rem !important;
-  left: auto !important;
-  bottom: auto !important;
-  background: #111827 !important;
-  color: var(--text-muted) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 4px !important;
-  padding: 0.25rem 0.65rem !important;
-  font-size: 0.7rem !important;
-  cursor: pointer !important;
-  font-family: var(--font-sans) !important;
-  opacity: 0.85 !important;
-  z-index: 20 !important;
-  line-height: 1.2 !important;
-  margin: 0 !important;
-  float: none !important;
-  display: inline-block !important;
-  width: auto !important;
-  height: auto !important;
-}
-.note-content pre button.copy-btn:hover {
-  opacity: 1 !important;
-  color: var(--text) !important;
-  background: var(--bg-hover) !important;
-  border-color: var(--cyan) !important;
-}
-.note-content pre button.copy-btn.copied {
-  background: rgba(0, 255, 157, 0.2) !important;
-  color: var(--green) !important;
-  border-color: var(--green) !important;
-  opacity: 1 !important;
-}
+.callout pre { margin: 0.5rem 0 0; }
 
 .note-image {
   cursor: zoom-in;
@@ -845,7 +860,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin: 1rem -20%;
   cursor: zoom-out;
 }
-/* placeholder highlight */
+
 /* placeholder highlight — values user must replace */
 .note-content code .ph,
 .note-content pre code .ph,

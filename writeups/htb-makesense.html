@@ -426,6 +426,7 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
   <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
   <script src="../js/app.js"></script>
   <script>
+    // Syntax highlight + simple copy on <pre> (no cmd-block conversion)
     document.querySelectorAll('.note-content pre code').forEach(function (block) {
       var html = block.innerHTML;
       html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
@@ -436,49 +437,7 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
     });
 
     document.querySelectorAll('.note-content pre').forEach(function (pre) {
-      if (pre.dataset.converted === '1') return;
-      var codeEl = pre.querySelector('code');
-      if (!codeEl) return;
-      var rawText = codeEl.innerText.replace(/\n$/, '');
-      var lines = rawText.split(/\n/);
-      var multiline = lines.length > 2
-        || /^(import |from |def |class |KEY |const |var |PORT |LISTEN |HTTP|\[\+)/m.test(rawText)
-        || rawText.indexOf('{') !== -1 && lines.length > 1;
-
-      var block = document.createElement('div');
-      block.className = 'cmd-block';
-
-      var label = document.createElement('div');
-      label.className = 'cmd-block-label';
-      var labelText = 'command';
-      if (multiline) {
-        if (/^import |^from |^def |python|KEY =|encrypt/i.test(rawText)) labelText = 'python';
-        else if (/^const |^var |^function |<script|XSS_|RCE_/i.test(rawText)) labelText = 'javascript';
-        else if (/^PORT |^LISTEN |^\[/m.test(rawText) || rawText.indexOf('OpenSSH') !== -1) labelText = 'output';
-        else if (/^<!DOCTYPE|^<html|^<form|^<script/i.test(rawText)) labelText = 'html';
-        else if (/^\{/.test(rawText.trim()) || rawText.indexOf('"id"') !== -1) labelText = 'json';
-        else if (/^# |^\/\/ Dummy|^define\(/m.test(rawText)) labelText = 'config';
-        else labelText = 'code';
-      } else {
-        var first = lines[0].trim();
-        labelText = first.length > 48 ? first.slice(0, 48) + '...' : (first || 'command');
-      }
-      label.textContent = labelText;
-
-      var body = document.createElement('div');
-      body.className = 'cmd-block-body' + (multiline ? ' multiline' : '');
-
-      if (!multiline) {
-        var prompt = document.createElement('span');
-        prompt.className = 'prompt';
-        prompt.textContent = '$';
-        body.appendChild(prompt);
-      }
-
-      var code = document.createElement('code');
-      code.innerHTML = codeEl.innerHTML;
-      body.appendChild(code);
-
+      if (pre.querySelector('button.copy-btn')) return;
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn';
@@ -486,7 +445,10 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
       btn.innerHTML = '<i class="bx bx-copy"></i>';
       btn.addEventListener('click', function (e) {
         e.preventDefault();
-        navigator.clipboard.writeText(rawText).then(function () {
+        e.stopPropagation();
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
           btn.innerHTML = '<i class="bx bx-check"></i>';
           btn.classList.add('copied');
           setTimeout(function () {
@@ -495,13 +457,11 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
           }, 1600);
         });
       });
-      body.appendChild(btn);
-
-      block.appendChild(label);
-      block.appendChild(body);
-      pre.dataset.converted = '1';
-      pre.replaceWith(block);
+      pre.appendChild(btn);
     });
+
+
+
 
     function toggleZoom(img) {
       img.classList.toggle('expanded');

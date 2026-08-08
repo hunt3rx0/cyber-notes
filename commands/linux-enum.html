@@ -35,37 +35,45 @@
           <p class="meta">Fast local enumeration commands before running automated tools.</p>
         </header>
         <div class="cmd-block">
-          <div class="cmd-block-label">SUID binaries</div>
-          <div class="cmd-block-body">
-            <span class="prompt">$</span>
-            <code>find / -perm -4000 -type f 2>/dev/null</code>
-            <button type="button" class="copy-btn" data-copy="find / -perm -4000 -type f 2>/dev/null"><i class="bx bx-copy"></i></button>
+            <div class="cmd-block-label">
+              <span class="label-text">SUID binaries</span>
+              <button type="button" class="copy-btn" data-copy="find / -perm -4000 -type f 2>/dev/null" aria-label="Copy"><i class="bx bx-copy"></i></button>
+            </div>
+            <div class="cmd-block-body">
+              <span class="prompt">$</span>
+              <code>find / -perm -4000 -type f 2>/dev/null</code>
+            </div>
           </div>
-        </div>
         <div class="cmd-block">
-          <div class="cmd-block-label">Capabilities</div>
-          <div class="cmd-block-body">
-            <span class="prompt">$</span>
-            <code>getcap -r / 2>/dev/null</code>
-            <button type="button" class="copy-btn" data-copy="getcap -r / 2>/dev/null"><i class="bx bx-copy"></i></button>
+            <div class="cmd-block-label">
+              <span class="label-text">Capabilities</span>
+              <button type="button" class="copy-btn" data-copy="getcap -r / 2>/dev/null" aria-label="Copy"><i class="bx bx-copy"></i></button>
+            </div>
+            <div class="cmd-block-body">
+              <span class="prompt">$</span>
+              <code>getcap -r / 2>/dev/null</code>
+            </div>
           </div>
-        </div>
         <div class="cmd-block">
-          <div class="cmd-block-label">Cron jobs</div>
-          <div class="cmd-block-body">
-            <span class="prompt">$</span>
-            <code>cat /etc/crontab; ls -la /etc/cron.*</code>
-            <button type="button" class="copy-btn" data-copy="cat /etc/crontab; ls -la /etc/cron.*"><i class="bx bx-copy"></i></button>
+            <div class="cmd-block-label">
+              <span class="label-text">Cron jobs</span>
+              <button type="button" class="copy-btn" data-copy="cat /etc/crontab; ls -la /etc/cron.*" aria-label="Copy"><i class="bx bx-copy"></i></button>
+            </div>
+            <div class="cmd-block-body">
+              <span class="prompt">$</span>
+              <code>cat /etc/crontab; ls -la /etc/cron.*</code>
+            </div>
           </div>
-        </div>
         <div class="cmd-block">
-          <div class="cmd-block-label">Writable paths</div>
-          <div class="cmd-block-body">
-            <span class="prompt">$</span>
-            <code>find / -writable -type d 2>/dev/null | head</code>
-            <button type="button" class="copy-btn" data-copy="find / -writable -type d 2>/dev/null | head"><i class="bx bx-copy"></i></button>
+            <div class="cmd-block-label">
+              <span class="label-text">Writable paths</span>
+              <button type="button" class="copy-btn" data-copy="find / -writable -type d 2>/dev/null | head" aria-label="Copy"><i class="bx bx-copy"></i></button>
+            </div>
+            <div class="cmd-block-body">
+              <span class="prompt">$</span>
+              <code>find / -writable -type d 2>/dev/null | head</code>
+            </div>
           </div>
-        </div>
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>
