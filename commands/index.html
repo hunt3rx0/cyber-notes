@@ -32,29 +32,147 @@
         <div class="page-header">
           <div class="section-label">// COMMANDS</div>
           <h1>Battle-tested one-liners</h1>
-          <p>Recon, AD, web, priv-esc and pivoting. Copy-paste ready.</p>
+          <p>Organized by pentest workflow. Copy-paste ready.</p>
         </div>
         <div class="search-wrap">
           <i class="bx bx-search"></i>
-          <input type="search" id="search" placeholder="Search commands..." />
+          <input type="search" id="search" placeholder="Search commands, tools, phases..." />
         </div>
-        <div class="note-grid">
-          <a href="nmap-cheatsheet.html" class="note-card" data-search="nmap recon port scan version scripts">
-            <h3>Nmap Cheatsheet</h3>
-            <p>Battle-tested nmap one-liners for discovery, version detection and scripts.</p>
-            <div class="tags"><span class="tag">RECON</span><span class="tag muted">NMAP</span><span class="tag muted">PORT-SCAN</span></div>
-          </a>
-          <a href="linux-enum.html" class="note-card" data-search="linux enum privesc suid capabilities cron">
-            <h3>Linux Enumeration</h3>
-            <p>Fast local enumeration commands before running automated tools.</p>
-            <div class="tags"><span class="tag">PRIVESC</span><span class="tag muted">LINUX</span><span class="tag muted">ENUM</span></div>
-          </a>
-        </div>
+
+        <!-- 01 RECONNAISSANCE -->
+        <section class="phase-section" data-phase="recon">
+          <div class="phase-head">
+            <span class="phase-num">01</span>
+            <span class="phase-title">Reconnaissance</span>
+            <span class="phase-desc">Host discovery, port scanning, service fingerprinting</span>
+          </div>
+          <div class="phase-grid">
+            <a href="nmap-cheatsheet.html" class="note-card" data-search="nmap recon port scan version scripts reconnaissance">
+              <h3>Nmap Cheatsheet</h3>
+              <p>Top ports, full TCP, UDP, OS detection — battle-tested scan one-liners.</p>
+              <div class="tags"><span class="tag">NMAP</span><span class="tag muted">PORT-SCAN</span><span class="tag muted">SERVICE-DETECT</span></div>
+            </a>
+            <div class="note-card soon" data-search="whois dns osint subdomain recon">
+              <h3>OSINT &amp; DNS</h3>
+              <p>whois, dig, certificate transparency, subdomain discovery.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 ENUMERATION -->
+        <section class="phase-section" data-phase="enum">
+          <div class="phase-head">
+            <span class="phase-num">02</span>
+            <span class="phase-title">Enumeration</span>
+            <span class="phase-desc">Web, SMB, LDAP and service-specific digging</span>
+          </div>
+          <div class="phase-grid">
+            <div class="note-card soon" data-search="ffuf gobuster web directory fuzz enum">
+              <h3>Web Content Discovery</h3>
+              <p>ffuf / gobuster directory and vhost fuzzing with filters.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+            <div class="note-card soon" data-search="smb enum4linux crackmapexec ldap">
+              <h3>SMB &amp; LDAP</h3>
+              <p>Share listing, null sessions, domain object enumeration.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 INITIAL ACCESS -->
+        <section class="phase-section" data-phase="access">
+          <div class="phase-head">
+            <span class="phase-num">03</span>
+            <span class="phase-title">Initial Access</span>
+            <span class="phase-desc">Payloads, password sprays, public exploits</span>
+          </div>
+          <div class="phase-grid">
+            <div class="note-card soon" data-search="hydra password spray crackmapexec winrm ssh">
+              <h3>Password Attacks</h3>
+              <p>Spray and brute patterns for SSH, WinRM, SMB, HTTP.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+            <div class="note-card soon" data-search="reverse shell msfvenom payload">
+              <h3>Shells &amp; Payloads</h3>
+              <p>Reverse shells, msfvenom, and listener one-liners.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 PRIVILEGE ESCALATION -->
+        <section class="phase-section" data-phase="privesc">
+          <div class="phase-head">
+            <span class="phase-num">04</span>
+            <span class="phase-title">Privilege Escalation</span>
+            <span class="phase-desc">Local enum, misconfigs, kernel and token abuse</span>
+          </div>
+          <div class="phase-grid">
+            <a href="linux-enum.html" class="note-card" data-search="linux enum privesc suid capabilities cron linpeas">
+              <h3>Linux Enumeration</h3>
+              <p>SUID, writable files, processes — fast checks before linpeas.</p>
+              <div class="tags"><span class="tag">LINUX</span><span class="tag muted">SUID</span><span class="tag muted">LINPEAS</span></div>
+            </a>
+            <div class="note-card soon" data-search="windows privesc winpeas token priv">
+              <h3>Windows Privesc</h3>
+              <p>Token privileges, service abuse, registry autostarts.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 05 POST-EXPLOITATION -->
+        <section class="phase-section" data-phase="postex">
+          <div class="phase-head">
+            <span class="phase-num">05</span>
+            <span class="phase-title">Post-Exploitation</span>
+            <span class="phase-desc">Persistence, credential dumping, lateral movement</span>
+          </div>
+          <div class="phase-grid">
+            <div class="note-card soon" data-search="mimikatz secretsdump credential dump lsass">
+              <h3>Credential Dumping</h3>
+              <p>LSASS, SAM, LSA secrets, and DCSync-style collection.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+            <div class="note-card soon" data-search="lateral movement psexec wmiexec evil-winrm pivot">
+              <h3>Lateral Movement</h3>
+              <p>PsExec, WMI, WinRM, and simple pivot patterns.</p>
+              <div class="tags"><span class="tag muted">SOON</span></div>
+            </div>
+          </div>
+        </section>
+
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>
   </div>
   <button type="button" class="mobile-toggle" id="mobileToggle"><i class="bx bx-menu"></i></button>
   <script src="../js/app.js"></script>
+  <script>
+    (function () {
+      var input = document.getElementById('search');
+      if (!input) return;
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.phase-grid .note-card'));
+      var sections = Array.prototype.slice.call(document.querySelectorAll('.phase-section'));
+      input.addEventListener('input', function () {
+        var q = (input.value || '').toLowerCase().trim();
+        cards.forEach(function (card) {
+          var hay = (card.getAttribute('data-search') || card.textContent).toLowerCase();
+          card.style.display = !q || hay.indexOf(q) !== -1 ? '' : 'none';
+        });
+        sections.forEach(function (sec) {
+          var visible = sec.querySelectorAll('.note-card:not([style*="display: none"])');
+          // also count cards without inline hide
+          var any = false;
+          sec.querySelectorAll('.note-card').forEach(function (c) {
+            if (c.style.display !== 'none') any = true;
+          });
+          sec.style.display = any ? '' : 'none';
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

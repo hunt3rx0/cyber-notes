@@ -31,32 +31,146 @@
     </aside>
     <div class="main">
       <div class="content">
-        <div class="page-header">
-          <div class="section-label">// WRITEUPS</div>
-          <h1>Post-engagement &amp; CTF notes</h1>
-          <p>Tagged by OS and difficulty. Click any card for the full walkthrough.</p>
+        <div class="archive-toolbar">
+          <div class="page-title-block">
+            <div class="section-label">// ARCHIVE</div>
+            <h1>Writeups</h1>
+          </div>
+          <div class="archive-controls">
+            <div class="archive-search">
+              <i class="bx bx-search"></i>
+              <input type="search" id="search" placeholder="grep title, tag, summary..." />
+            </div>
+            <div class="archive-filters" id="filters">
+              <button type="button" class="active" data-filter="all">All</button>
+              <button type="button" data-filter="linux">Linux</button>
+              <button type="button" data-filter="windows">Windows</button>
+              <button type="button" data-filter="web">Web</button>
+              <button type="button" data-filter="other">Other</button>
+            </div>
+          </div>
         </div>
-        <div class="search-wrap">
-          <i class="bx bx-search"></i>
-          <input type="search" id="search" placeholder="Search writeups, tags, OS..." />
-        </div>
-        <div class="note-grid">
-          <a href="htb-makesense.html" class="note-card" data-search="htb makesense wordpress xss aes ocr medium linux whisper">
-            <h3>HTB: MakeSense</h3>
-            <p>Stored XSS via leaked AES key → admin bot RCE → OCR4 path to root. HTB Season 11 Week #7.</p>
-            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">MEDIUM</span><span class="tag muted">XSS</span><span class="tag muted">WORDPRESS</span></div>
-          </a>
 
-          <a href="htb-paperwork.html" class="note-card" data-search="htb paperwork lpd scm_rights linux easy path traversal">
-            <h3>HTB: Paperwork</h3>
-            <p>LPD command injection → JetDirect path traversal → SCM_RIGHTS FD leak to root. HTB Season 11 Week #8.</p>
-            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">EASY</span><span class="tag muted">LPD</span><span class="tag muted">SCM_RIGHTS</span></div>
-          </a>
+        <div class="archive-list" id="archiveList">
 
-          <a href="htb-cohort.html" class="note-card" data-search="htb cohort ssrf websocket linux easy packagekit cve">
+          <a href="htb-cohort.html" class="archive-item" data-search="htb cohort ssrf websocket linux easy packagekit cve" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">EASY</span>
+              </div>
+            </div>
             <h3>HTB: Cohort</h3>
-            <p>SSRF → internal notebook RCE (CVE-2026-39987) → PackageKit privesc (CVE-2026-41651). HTB Season 11 Week #11.</p>
-            <div class="tags"><span class="tag">LINUX</span><span class="tag amber">EASY</span><span class="tag muted">SSRF</span><span class="tag muted">RCE</span></div>
+            <p class="archive-desc">SSRF → internal notebook RCE (CVE-2026-39987) → PackageKit privesc (CVE-2026-41651)</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 11</span><span>SSRF</span><span>RCE</span><span>WEBSOCKET</span><span>PACKAGEKIT</span>
+            </div>
+          </a>
+
+          <a href="htb-bedside.html" class="archive-item" data-search="htb bedside pdfminer pickle torch monai medium linux cve-2025-64512" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">MEDIUM</span>
+              </div>
+            </div>
+            <h3>HTB: Bedside</h3>
+            <p class="archive-desc">CVE-2025-64512 PDF Encoding RCE → developer SSH via LFI → torch.load pickle sudo → SUID bash</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 9</span><span>PDFMINER</span><span>PICKLE</span><span>TORCH</span><span>CHISEL</span>
+            </div>
+          </a>
+
+          <a href="htb-paperwork.html" class="archive-item" data-search="htb paperwork lpd scm_rights linux easy path traversal" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">EASY</span>
+              </div>
+            </div>
+            <h3>HTB: Paperwork</h3>
+            <p class="archive-desc">LPD command injection → JetDirect path traversal → SCM_RIGHTS FD leak to root</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 8</span><span>LPD</span><span>SCM_RIGHTS</span><span>PATH TRAVERSAL</span>
+            </div>
+          </a>
+
+          <a href="htb-makesense.html" class="archive-item" data-search="htb makesense wordpress xss aes ocr medium linux whisper" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">MEDIUM</span>
+              </div>
+            </div>
+            <h3>HTB: MakeSense</h3>
+            <p class="archive-desc">Stored XSS via leaked AES key → admin bot RCE → OCR4 path to root</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 7</span><span>XSS</span><span>WORDPRESS</span><span>AES</span><span>OCR</span>
+            </div>
+          </a>
+
+          <a href="htb-checkpoint.html" class="archive-item" data-search="htb checkpoint windows ad badsuccessor vsix medium dc" data-os="windows">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">WINDOWS</span>
+                <span class="badge diff">MEDIUM</span>
+              </div>
+            </div>
+            <h3>HTB: Checkpoint</h3>
+            <p class="archive-desc">Restore deleted user → DevDrop VSIX RCE → BadSuccessor (CVE-2025-53779) → VM memory hashdump → DA</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 4</span><span>AD</span><span>VSIX</span><span>BADSUCCESSOR</span><span>VOLATILITY</span>
+            </div>
+          </a>
+
+          <a href="htb-connected.html" class="archive-item" data-search="htb connected asterisk rce medium linux" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">EASY</span>
+              </div>
+            </div>
+            <h3>HTB: Connected</h3>
+            <p class="archive-desc">Unauthenticated SQLi in FreePBX → Webshell as asterisk → SUID bash privesc</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 3</span><span>FreePBX SQLi</span><span>incron</span><span>CVE-2025-57819</span><span>SUID</span>
+            </div>
+          </a>
+
+          <a href="htb-devhub.html" class="archive-item" data-search="htb devhub jupyter rce medium linux" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">MEDIUM</span>
+              </div>
+            </div>
+            <h3>HTB: DevHub</h3>
+            <p class="archive-desc">Unauth MCPJam RCE as mcp-dev → Jupyter tunnel to analyst → root API dumps SSH key</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 2</span><span>RCE</span><span>Jupyter</span><span>CHISEL</span><span>API-KEY</span>
+            </div>
+          </a>
+
+          <a href="htb-reactor.html" class="archive-item" data-search="htb reactor nextjs rce medium linux" data-os="linux">
+            <div class="archive-item-top">
+              <span class="archive-meta">2026-08-09 · HACKTHEBOX</span>
+              <div class="archive-badges">
+                <span class="badge os">LINUX</span>
+                <span class="badge diff">EASY</span>
+              </div>
+            </div>
+            <h3>HTB: Reactor</h3>
+            <p class="archive-desc">Unauthenticated RCE in Next.js (React2Shell) → SQLite credential extraction → Node.js inspector privesc</p>
+            <div class="archive-tags">
+              <span>HTB Season 11</span><span>Week 1</span><span>RCE</span><span>React2Shell</span><span>SQLite</span><span>Node.js</span>
+            </div>
           </a>
 
         </div>
@@ -66,5 +180,36 @@
   </div>
   <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
   <script src="../js/app.js"></script>
+  <script>
+    (function () {
+      var items = Array.prototype.slice.call(document.querySelectorAll('.archive-item'));
+      var search = document.getElementById('search');
+      var filter = 'all';
+
+      function apply() {
+        var q = (search && search.value || '').toLowerCase().trim();
+        items.forEach(function (el) {
+          var hay = (el.getAttribute('data-search') || el.textContent).toLowerCase();
+          var os = (el.getAttribute('data-os') || '').toLowerCase();
+          var okFilter = filter === 'all' || os === filter || (filter === 'other' && ['linux','windows','web','cloud'].indexOf(os) === -1);
+          var okSearch = !q || hay.indexOf(q) !== -1;
+          el.style.display = okFilter && okSearch ? '' : 'none';
+        });
+      }
+
+      if (search) search.addEventListener('input', apply);
+      var filters = document.getElementById('filters');
+      if (filters) {
+        filters.addEventListener('click', function (e) {
+          var btn = e.target.closest('button[data-filter]');
+          if (!btn) return;
+          filters.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          filter = btn.getAttribute('data-filter');
+          apply();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -34,46 +34,63 @@
           <h1>Nmap Cheatsheet</h1>
           <p class="meta">Battle-tested nmap one-liners for discovery, version detection and scripts.</p>
         </header>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">Quick top ports</span>
-              <button type="button" class="copy-btn" data-copy="nmap -sV --top-ports 100 -T4 <target>" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">NMAP</span>
+            <span class="cat-badge">RECON</span>
+            <span class="cmd-card-title">Quick top ports scan</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>nmap -sV --top-ports 100 -T4 &lt;target&gt;</code>
+              <code>nmap -sV --top-ports 100 -T4 <span class="ph">&lt;target&gt;</span></code>
+              <button type="button" class="copy-btn" data-copy="nmap -sV --top-ports 100 -T4 <target>" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">Full TCP + scripts</span>
-              <button type="button" class="copy-btn" data-copy="nmap -sC -sV -p- -T4 <target> -oA full" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+          <div class="cmd-block-note">Fast service detection on the 100 most common ports.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">NMAP</span>
+            <span class="cat-badge">RECON</span>
+            <span class="cmd-card-title">Full TCP + default scripts</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>nmap -sC -sV -p- -T4 &lt;target&gt; -oA full</code>
+              <code>nmap -sC -sV -p- -T4 <span class="ph">&lt;target&gt;</span> -oA full</code>
+              <button type="button" class="copy-btn" data-copy="nmap -sC -sV -p- -T4 <target> -oA full" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">UDP common</span>
-              <button type="button" class="copy-btn" data-copy="nmap -sU --top-ports 50 <target>" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+          <div class="cmd-block-note">All TCP ports with version detection and default NSE scripts.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">NMAP</span>
+            <span class="cat-badge">RECON</span>
+            <span class="cmd-card-title">UDP common ports</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>nmap -sU --top-ports 50 &lt;target&gt;</code>
+              <code>nmap -sU --top-ports 50 <span class="ph">&lt;target&gt;</span></code>
+              <button type="button" class="copy-btn" data-copy="nmap -sU --top-ports 50 <target>" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
-        <div class="cmd-block">
-            <div class="cmd-block-label">
-              <span class="label-text">OS detection</span>
-              <button type="button" class="copy-btn" data-copy="nmap -O -sV <target>" aria-label="Copy"><i class="bx bx-copy"></i></button>
-            </div>
+          <div class="cmd-block-note">Top 50 UDP ports — slower; run in parallel with TCP when possible.</div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-card-head">
+            <span class="tool-badge">NMAP</span>
+            <span class="cat-badge">RECON</span>
+            <span class="cmd-card-title">OS detection</span>
+          </div>
+          <div class="cmd-block">
             <div class="cmd-block-body">
-              <span class="prompt">$</span>
-              <code>nmap -O -sV &lt;target&gt;</code>
+              <code>nmap -O -sV <span class="ph">&lt;target&gt;</span></code>
+              <button type="button" class="copy-btn" data-copy="nmap -O -sV <target>" aria-label="Copy"><i class="bx bx-copy"></i> COPY</button>
             </div>
           </div>
+          <div class="cmd-block-note">Requires root/privileged for best OS fingerprint accuracy.</div>
+        </div>
+
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>

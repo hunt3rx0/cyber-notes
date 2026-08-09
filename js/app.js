@@ -40,13 +40,14 @@
   document.querySelectorAll('[data-copy]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const text = btn.getAttribute('data-copy') || '';
+      const prev = btn.innerHTML;
       try {
         await navigator.clipboard.writeText(text);
         btn.classList.add('copied');
-        btn.innerHTML = '<i class="bx bx-check"></i>';
+        btn.innerHTML = '<i class="bx bx-check"></i> COPIED';
         setTimeout(() => {
           btn.classList.remove('copied');
-          btn.innerHTML = '<i class="bx bx-copy"></i>';
+          btn.innerHTML = prev;
         }, 1500);
       } catch (_) {}
     });
@@ -82,3 +83,25 @@
     typeWriter();
   }
 })();
+
+// Briefing command — type only on first visit ever (localStorage)
+document.addEventListener('DOMContentLoaded', function () {
+  const el = document.getElementById('briefing-type');
+  if (!el) return;
+
+  const text = 'tail -f /var/log/ops/knowledge';
+  const speed = 55;
+  let i = 0;
+
+  el.textContent = ''; // reset in case of cached content
+
+  function tick() {
+    if (i <= text.length) {
+      el.textContent = text.slice(0, i);
+      i += 1;
+      setTimeout(tick, speed);
+    }
+  }
+
+  tick();
+});

