@@ -56,7 +56,7 @@
   // Typewriter: .d4nx0 (from original cyber-notes)
   const typeEl = document.getElementById('typewriter');
   if (typeEl) {
-    const text = '.d4nx0';
+    const text = '_4ut0b0t';
     let index = 0;
     let isDeleting = false;
     let speed = 100;
