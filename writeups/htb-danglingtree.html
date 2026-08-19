@@ -55,7 +55,7 @@
             <li><strong>80/443</strong> – IIS</li>
             <li><strong>3389</strong> – RDP</li>
             <li><strong>6600</strong> – Windows Admin Center (HTTPS)</li>
-            <li><strong>Host:</strong> <code>DC</code> · Domain: <code>danglingtree.htb</code></li>
+            <li><strong>Host:</strong> <code>DC</code> / Domain: <code>danglingtree.htb</code></li>
           </ul>
 
           <div class="callout info">
@@ -70,7 +70,7 @@
 smbclient //danglingtree.htb/IT -N
 # \Security\DanglingTree_RoE_Assessment.pdf
 
-pdftotext DanglingTree_RoE_Assessment.pdf -
+pdftotext DanglingTree_RoE_Assessment.pdf DanglingTree_RoE_Assessment.txt
 # anderson.w:R3dT3am@Acc3ss#01</code></pre>
 
           <pre><code>nxc smb <span class="ph">&lt;target-ip&gt;</span> -d danglingtree.htb -u anderson.w -p 'R3dT3am@Acc3ss#01'
