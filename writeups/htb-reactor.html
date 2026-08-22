@@ -128,10 +128,12 @@ cat /root/root.txt</code></pre>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            Unauthenticated RCE in a modern Next.js stack (React2Shell) dropped a shell into the app environment where secrets and SQLite hashes lived. Always check local services after foothold — a root-owned Node inspector on <code>127.0.0.1:9229</code> turned into trivial SUID escalation via Chrome DevTools. Keep dependency versions patched and never expose debug/inspect ports.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Unauthenticated RCE in a modern Next.js stack (React2Shell) dropped a shell into the app environment where secrets and SQLite hashes lived.</li>
+            <li>Always check local services after foothold — a root-owned Node inspector on <code>127.0.0.1:9229</code> turned into trivial SUID escalation via Chrome DevTools.</li>
+            <li>Keep dependency versions patched and never expose debug/inspect ports.</li>
+          </ul>
         </div>
 
       </div>

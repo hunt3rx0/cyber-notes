@@ -144,10 +144,13 @@ type C:\Users\max.palmer\Desktop\root.txt</code></pre>
             <li><strong>Root flag:</strong> <code>C:\Users\max.palmer\Desktop\root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            Restoring a deleted user with WRITE rights and password reuse unlocked a writable <code>DevDrop</code> share — a perfect drop for a malicious VSIX. From <code>ryan.brooks</code>, BadSuccessor (CVE-2025-53779) recovered <code>svc_deploy</code>’s RC4 hash, which could read VM memory backups. Volatility hashdump of a domain admin from a snapshot closed the chain. Treat deleted-object ACLs, extension drop shares, and dMSA permissions as high-value attack surface; encrypt or isolate backup memory images.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Restoring a deleted user with WRITE rights and password reuse unlocked a writable <code>DevDrop</code> share — a perfect drop for a malicious VSIX.</li>
+            <li>From <code>ryan.brooks</code>, BadSuccessor (CVE-2025-53779) recovered <code>svc_deploy</code>’s RC4 hash, which could read VM memory backups.</li>
+            <li>Volatility hashdump of a domain admin from a snapshot closed the chain.</li>
+            <li>Treat deleted-object ACLs, extension drop shares, and dMSA permissions as high-value attack surface; encrypt or isolate backup memory images.</li>
+          </ul>
         </div>
 
       </div>

@@ -145,10 +145,12 @@ cat /root/root.txt</code></pre>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            Unauthenticated SQLi in FreePBX (CVE-2025-57819) was enough to plant a webshell and land as <code>asterisk</code>. Privilege escalation came from a classic writable web module path combined with root <code>incron</code> automation — never let service accounts write module trees that root later includes. Patch FreePBX, restrict module directories, and audit incron rules that invoke privileged helpers.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Unauthenticated SQLi in FreePBX (CVE-2025-57819) was enough to plant a webshell and land as <code>asterisk</code>.</li>
+            <li>Privilege escalation came from a classic writable web module path combined with root <code>incron</code> automation — never let service accounts write module trees that root later includes.</li>
+            <li>Patch FreePBX, restrict module directories, and audit incron rules that invoke privileged helpers.</li>
+          </ul>
         </div>
 
       </div>

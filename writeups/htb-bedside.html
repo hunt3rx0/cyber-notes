@@ -207,10 +207,13 @@ cat /root/root.txt</code></pre>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            pdfminer’s CMap path resolution turned a “safe” PDF upload into pickle RCE (CVE-2025-64512). Internal services and LFI on :3000 exposed developer SSH keys. A sudo-wrapped ML trainer still calling <code>torch.load()</code> without <code>weights_only=True</code> completed the path to root. Patch pdfminer, isolate upload processors, and never deserialize untrusted model files as root.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>pdfminer’s CMap path resolution turned a “safe” PDF upload into pickle RCE (CVE-2025-64512).</li>
+            <li>Internal services and LFI on :3000 exposed developer SSH keys.</li>
+            <li>A sudo-wrapped ML trainer still calling <code>torch.load()</code> without <code>weights_only=True</code> completed the path to root.</li>
+            <li>Patch pdfminer, isolate upload processors, and never deserialize untrusted model files as root.</li>
+          </ul>
         </div>
 
       </div>

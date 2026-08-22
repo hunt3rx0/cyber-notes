@@ -183,10 +183,11 @@ uid=1000(marimo) gid=1000(marimo) euid=0(root) groups=1000(marimo)</code></pre>
             <li><strong>User flag:</strong> <code>/home/marimo/user.txt</code></li>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            This machine highlights the dangers of information disclosure through SSRF, leading to an RCE via a vulnerable WebSocket endpoint, followed by a PackageKit vulnerability for privilege escalation. Always check internal APIs and installed package versions!
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>This machine highlights the dangers of information disclosure through SSRF, leading to an RCE via a vulnerable WebSocket endpoint, followed by a PackageKit vulnerability for privilege escalation.</li>
+            <li>Always check internal APIs and installed package versions!</li>
+          </ul>
         </div>
 
       </div>

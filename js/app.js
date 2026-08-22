@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const el = document.getElementById('briefing-type');
   if (!el) return;
 
-  const text = 'tail -f /var/log/ops/knowledge';
+  const text = './redteam --load-notes';
   const speed = 55;
   let i = 0;
 

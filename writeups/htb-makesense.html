@@ -412,10 +412,12 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
   <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
 </ul>
 
-<div class="callout info">
-  <strong>✅ Lessons Learned</strong>
-  Client-side secrets are not secrets — the Whisper AES key in theme JS let us forge encrypted transcriptions and land stored XSS on an admin bot. From there, theme-editor RCE as <code>www-data</code>, password reuse into SSH as <code>walter</code>, and a root PHP built-in server on <code>127.0.0.1:8001</code> turned OCR “save as .php” into a root webshell. Always review front-end crypto keys, bot-reviewed admin panels, and localhost services after a foothold.
-</div>
+          <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Client-side secrets are not secrets — the Whisper AES key in theme JS let us forge encrypted transcriptions and land stored XSS on an admin bot.</li>
+            <li>From there, theme-editor RCE as <code>www-data</code>, password reuse into SSH as <code>walter</code>, and a root PHP built-in server on <code>127.0.0.1:8001</code> turned OCR “save as .php” into a root webshell.</li>
+            <li>Always review front-end crypto keys, bot-reviewed admin panels, and localhost services after a foothold.</li>
+          </ul>
 
         </div>
       </div>

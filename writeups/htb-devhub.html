@@ -179,10 +179,13 @@ cat /root/root.txt</code></pre>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            An unauthenticated MCP “server registration” that executes arbitrary <code>command</code>/<code>args</code> is straight RCE. From <code>mcp-dev</code>, a localhost Jupyter instance owned by <code>analyst</code> was one tunnel away from a second user shell. Finally, a root MCP admin tool protected only by a static API key dumped root’s SSH private key. Never expose debug/admin tool bridges without authz, and keep internal notebooks off shared hosts without strong binding controls.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>An unauthenticated MCP “server registration” that executes arbitrary <code>command</code>/<code>args</code> is straight RCE.</li>
+            <li>From <code>mcp-dev</code>, a localhost Jupyter instance owned by <code>analyst</code> was one tunnel away from a second user shell.</li>
+            <li>Finally, a root MCP admin tool protected only by a static API key dumped root’s SSH private key.</li>
+            <li>Never expose debug/admin tool bridges without authz, and keep internal notebooks off shared hosts without strong binding controls.</li>
+          </ul>
         </div>
 
       </div>

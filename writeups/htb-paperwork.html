@@ -204,10 +204,11 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
             <li><strong>User flag:</strong> <code>/home/archivist/user.txt</code></li>
             <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
           </ul>
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            This machine requires chaining multiple vulnerabilities: RCE via unsanitized <code>shell=True</code>, path traversal to write an SSH key, and <code>SCM_RIGHTS</code> file descriptor leaking to read a root-owned config file. Always check internal services and Unix sockets!
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>This machine requires chaining multiple vulnerabilities: RCE via unsanitized <code>shell=True</code>, path traversal to write an SSH key, and <code>SCM_RIGHTS</code> file descriptor leaking to read a root-owned config file.</li>
+            <li>Always check internal services and Unix sockets!</li>
+          </ul>
         </div>
 
       </div>

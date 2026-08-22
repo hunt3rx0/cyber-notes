@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Techniques</title>
+  <title>Techniques — _4ut0b0t</title>
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../css/style.css" />
@@ -32,25 +32,43 @@
         <div class="page-header">
           <div class="section-label">// TECHNIQUES</div>
           <h1>ATT&amp;CK-mapped TTPs</h1>
-          <p>Techniques with detection notes for the blue side of the team.</p>
+          <p>Techniques with detection notes for the blue side of the team — split by CTF lab work and live attack tradecraft.</p>
         </div>
-        <div class="note-grid">
-          <a href="linux-privesc.html" class="note-card" data-search="linux privilege escalation privesc suid">
-            <h3>Linux Privilege Escalation</h3>
-            <p>Common techniques and checklist for Linux privilege escalation.</p>
-            <div class="tags"><span class="tag">PRIVESC</span><span class="tag muted">LINUX</span><span class="tag muted">T1068</span></div>
-          </a>
-          <a href="ssrf-internal.html" class="note-card" data-search="ssrf internal web cloud metadata">
-            <h3>SSRF to Internal Services</h3>
-            <p>Chaining SSRF into metadata endpoints, internal APIs and pivot points.</p>
-            <div class="tags"><span class="tag">SSRF</span><span class="tag muted">WEB</span><span class="tag muted">T1190</span></div>
-          </a>
-          <a href="subdomain-takeover.html" class="note-card" data-search="subdomain takeover aws dns dangling">
-            <h3>Subdomain Takeover</h3>
-            <p>Detecting dangling DNS records and claiming cloud resources.</p>
-            <div class="tags"><span class="tag">RECON</span><span class="tag muted">AWS</span><span class="tag muted">T1584</span></div>
-          </a>
-        </div>
+
+        <section class="phase-section" data-phase="ctf">
+          <div class="phase-head">
+            <span class="phase-num">01</span>
+            <span class="phase-title">CTF Techniques</span>
+            <span class="phase-desc">Lab &amp; competition patterns — priv-esc, takeover, puzzle chains</span>
+          </div>
+          <div class="note-grid">
+            <a href="linux-privesc.html" class="note-card" data-search="linux privilege escalation privesc suid ctf">
+              <h3>Linux Privilege Escalation</h3>
+              <p>Common techniques and checklist for Linux privilege escalation.</p>
+              <div class="tags"><span class="tag">PRIVESC</span><span class="tag muted">LINUX</span><span class="tag muted">T1068</span></div>
+            </a>
+            <a href="subdomain-takeover.html" class="note-card" data-search="subdomain takeover aws dns dangling ctf">
+              <h3>Subdomain Takeover</h3>
+              <p>Detecting dangling DNS records and claiming cloud resources.</p>
+              <div class="tags"><span class="tag">RECON</span><span class="tag muted">AWS</span><span class="tag muted">T1584</span></div>
+            </a>
+          </div>
+        </section>
+
+        <section class="phase-section" data-phase="attack">
+          <div class="phase-head">
+            <span class="phase-num">02</span>
+            <span class="phase-title">Attack Techniques</span>
+            <span class="phase-desc">Engagement TTPs — web pivot, internal access, real-world paths</span>
+          </div>
+          <div class="note-grid">
+            <a href="ssrf-internal.html" class="note-card" data-search="ssrf internal web cloud metadata attack">
+              <h3>SSRF to Internal Services</h3>
+              <p>Chaining SSRF into metadata endpoints, internal APIs and pivot points.</p>
+              <div class="tags"><span class="tag">SSRF</span><span class="tag muted">WEB</span><span class="tag muted">T1190</span></div>
+            </a>
+          </div>
+        </section>
       </div>
       <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
     </div>

@@ -730,10 +730,15 @@ print("[+] Authenticated Users received full control")</code></pre>
             <li><strong>Root flag:</strong> <code>C:\Users\Administrator\Desktop\root.txt</code></li>
           </ul>
 
-          <div class="callout info">
-            <strong>✅ Lessons Learned</strong>
-            Guest-readable assessment PDFs are free creds. WAC UI RBAC does not equal SME API enforcement — browser-console PowerShell still ran as the low-priv user. Hardcoded DES in a service assembly plus RunasCs closed the gap to interactive users. DPAPI credential bags yielded lateral movement; Support-IT force-change handed Template Editor rights. Published CA template <em>names</em> without matching objects let an attacker create an ESC1 template and mint a Domain Admin certificate. Audit guest shares, WAC/SME authz, DPAPI secrets, and ensure published templates exist with locked-down enrollment ACLs.
-          </div>
+                    <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Guest-readable assessment PDFs are free creds.</li>
+            <li>WAC UI RBAC does not equal SME API enforcement — browser-console PowerShell still ran as the low-priv user.</li>
+            <li>Hardcoded DES in a service assembly plus RunasCs closed the gap to interactive users.</li>
+            <li>DPAPI credential bags yielded lateral movement; Support-IT force-change handed Template Editor rights.</li>
+            <li>Published CA template <em>names</em> without matching objects let an attacker create an ESC1 template and mint a Domain Admin certificate.</li>
+            <li>Audit guest shares, WAC/SME authz, DPAPI secrets, and ensure published templates exist with locked-down enrollment ACLs.</li>
+          </ul>
         </div>
 
       </div>
