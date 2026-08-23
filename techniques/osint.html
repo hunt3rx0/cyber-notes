@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OSINT — _4ut0b0t</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="../writeups/index.html" class="nav-link"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> TECHNIQUES</a>
+
+        <header class="pwn-hero">
+          <div class="pwn-hero-label">// CTF · OSINT · PLAYBOOK</div>
+          <div class="pwn-hero-cmd">
+            <span class="prompt">$</span> osint --category <span class="arg">open_source_intel</span>
+          </div>
+          <p>Living notebook for CTF OSINT — people, domains, infrastructure, and image investigation.</p>
+          <div class="tags"><span class="tag">DOMAIN</span><span class="tag">PEOPLE</span><span class="tag">IMAGE</span><span class="tag">GEO</span><span class="tag muted">SOCIAL</span><span class="tag muted">INFRA</span></div>
+        </header>
+
+        <div class="section-title-row">
+          <div class="section-label">// TOOLKIT</div>
+          <h2>Tools</h2>
+        </div>
+        <div class="toolkit-grid">
+          <div class="tool-card">
+            <h3><span class="name">Amass / subfinder</span> <span class="dash">—</span> Subdomain enum</h3>
+            <p>Passive + active subdomain discovery for a root domain.</p>
+            <div class="tags"><span class="tag muted">DOMAIN</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">theHarvester</span> <span class="dash">—</span> Emails &amp; hosts</h3>
+            <p>Search engines and public sources (respect rate limits).</p>
+            <div class="tags"><span class="tag muted">PEOPLE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Sherlock / Maigret</span> <span class="dash">—</span> Username pivot</h3>
+            <p>Map a handle across social platforms.</p>
+            <div class="tags"><span class="tag muted">SOCIAL</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Google / Bing dorks</span> <span class="dash">—</span> Indexed secrets</h3>
+            <p>site:, filetype:, inurl: for exposed docs and panels.</p>
+            <div class="tags"><span class="tag muted">RECON</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Shodan / Censys</span> <span class="dash">—</span> Internet exposure</h3>
+            <p>Banners, certs, open ports on org IP ranges.</p>
+            <div class="tags"><span class="tag muted">INFRA</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Wayback / Archive</span> <span class="dash">—</span> Historical content</h3>
+            <p>Deleted pages, old JS, forgotten subdomains.</p>
+            <div class="tags"><span class="tag muted">DOMAIN</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">exiftool + Lens</span> <span class="dash">—</span> Image OSINT</h3>
+            <p>Metadata, reverse image search, landmarks.</p>
+            <div class="tags"><span class="tag muted">IMAGE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">WHOIS / crt.sh</span> <span class="dash">—</span> Registration intel</h3>
+            <p>Registrant, DNS history, certificate transparency.</p>
+            <div class="tags"><span class="tag muted">DOMAIN</span></div>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// COMMANDS</div>
+          <h2>Working commands</h2>
+        </div>
+
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">DOMAIN</span><span class="tag muted">RECON</span></div>
+          <p class="desc">Expand a company/root domain.</p>
+          <div class="code-wrap">
+            <pre><code>whois target.com
+dig ANY target.com +noall +answer
+curl -s 'https://crt.sh/?q=%25.target.com&amp;output=json' | jq -r '.[].name_value' | sort -u
+subfinder -d target.com -silent</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">SOCIAL</span></div>
+          <p class="desc">Pivot from a known alias.</p>
+          <div class="code-wrap">
+            <pre><code>sherlock username
+curl -s https://api.github.com/users/username/repos | jq '.[].html_url'</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">IMAGE</span></div>
+          <p class="desc">Photo with no obvious caption.</p>
+          <div class="code-wrap">
+            <pre><code>exiftool photo.jpg
+# reverse search: Google / Yandex / Lens
+strings photo.jpg | head</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">RECON</span></div>
+          <p class="desc">Find exposed files and login panels.</p>
+          <div class="code-wrap">
+            <pre><code># site:target.com filetype:pdf
+# site:target.com inurl:admin
+# site:target.com "index of"
+# site:target.com ext:env OR ext:sql</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// TTPS</div>
+          <h2>Technique usage</h2>
+        </div>
+        <div class="ttp-grid">
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">SUBDOMAIN PIVOT</span><span class="tag muted">DOMAIN</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Need hidden CTF scoreboard or admin host.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>CT logs + passive enum.</li><li>Resolve and httpx title/status.</li><li>Check takeover on NXDOMAIN CNAMEs.</li></ol>
+            <div class="gotcha">gotcha: Wildcard DNS creates false positives — filter by content hash.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">PEOPLE SEARCH</span><span class="tag muted">PEOPLE</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Challenge gives a name or email.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Search public pastes/profiles in scope only.</li><li>Username variants on major platforms.</li><li>Correlate employer + location hints.</li></ol>
+            <div class="gotcha">gotcha: Stay in scope — real doxxing is out of bounds for legitimate CTFs.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">GEO FROM PHOTO</span><span class="tag muted">GEO</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Landscape or street scene.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Read EXIF GPS if present.</li><li>Reverse image search landmarks.</li><li>UI language, power plugs, vegetation as clues.</li></ol>
+            <div class="gotcha">gotcha: Stripped EXIF is normal — visual OSINT matters more.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">INFRA BANNER</span><span class="tag muted">INFRA</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>IP or CIDR in challenge text.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Shodan/Censys host query.</li><li>Match TLS cert CN to domains.</li><li>Note outdated software for next stage.</li></ol>
+            <div class="gotcha">gotcha: CDN shared IPs mislead — prefer cert and host header evidence.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">ARCHIVE RECOVERY</span><span class="tag muted">DOMAIN</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Page deleted but still needed.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Wayback calendar snapshots.</li><li>Diff JS for old endpoints/keys.</li><li>Recover robots.txt and sitemaps.</li></ol>
+            <div class="gotcha">gotcha: Not all snapshots include POST-only or authenticated content.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">METADATA LEAK</span><span class="tag muted">IMAGE</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Document or image uploaded by victim.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>exiftool full dump.</li><li>Author, paths, printer, software versions.</li><li>Use internal paths as network/OS hints.</li></ol>
+            <div class="gotcha">gotcha: Editors may rewrite metadata — compare multiple file versions.</div>
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.cmd-play-card .copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.parentElement.querySelector('pre');
+        var text = pre ? pre.innerText : '';
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'COPIED';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

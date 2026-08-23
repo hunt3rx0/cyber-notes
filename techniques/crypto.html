@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crypto — _4ut0b0t</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="../writeups/index.html" class="nav-link"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> TECHNIQUES</a>
+
+        <header class="pwn-hero">
+          <div class="pwn-hero-label">// CTF · CRYPTO · PLAYBOOK</div>
+          <div class="pwn-hero-cmd">
+            <span class="prompt">$</span> crypto --category <span class="arg">cryptography</span>
+          </div>
+          <p>Living notebook for CTF crypto — classical, RSA, AES modes, and oracle attacks.</p>
+          <div class="tags"><span class="tag">RSA</span><span class="tag">AES</span><span class="tag">XOR</span><span class="tag">HASH</span><span class="tag muted">ORACLE</span><span class="tag muted">CLASSICAL</span></div>
+        </header>
+
+        <div class="section-title-row">
+          <div class="section-label">// TOOLKIT</div>
+          <h2>Tools</h2>
+        </div>
+        <div class="toolkit-grid">
+          <div class="tool-card">
+            <h3><span class="name">Pwntools / SageMath</span> <span class="dash">—</span> Math + exploit</h3>
+            <p>Number theory, lattices, scripted oracle clients.</p>
+            <div class="tags"><span class="tag muted">MATH</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">RsaCtfTool</span> <span class="dash">—</span> RSA attacks</h3>
+            <p>Wiener, weak e, common modulus, factordb integration.</p>
+            <div class="tags"><span class="tag muted">RSA</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">hashcat / john</span> <span class="dash">—</span> Hash cracking</h3>
+            <p>Wordlists, masks, rules for password hashes.</p>
+            <div class="tags"><span class="tag muted">HASH</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">CyberChef</span> <span class="dash">—</span> Quick transforms</h3>
+            <p>Encode/decode chains, XOR brute, bit ops.</p>
+            <div class="tags"><span class="tag muted">TRIAGE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">openssl</span> <span class="dash">—</span> Primitives CLI</h3>
+            <p>enc, dgst, rsautl for quick checks.</p>
+            <div class="tags"><span class="tag muted">CLI</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">featherduster</span> <span class="dash">—</span> XOR helpers</h3>
+            <p>Key length and crib dragging assists.</p>
+            <div class="tags"><span class="tag muted">XOR</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">PadBuster-style scripts</span> <span class="dash">—</span> CBC oracle</h3>
+            <p>Bytewise decryption via padding oracle.</p>
+            <div class="tags"><span class="tag muted">ORACLE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">factordb / yafu</span> <span class="dash">—</span> Factorization</h3>
+            <p>Small composites and algebraic factors.</p>
+            <div class="tags"><span class="tag muted">RSA</span></div>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// COMMANDS</div>
+          <h2>Working commands</h2>
+        </div>
+
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">HASH</span><span class="tag muted">TRIAGE</span></div>
+          <p class="desc">Identify and crack a hash.</p>
+          <div class="code-wrap">
+            <pre><code>hashid '$hash'
+john --format=raw-md5 --wordlist=rockyou.txt hashes.txt
+hashcat -m 0 hashes.txt rockyou.txt
+# 0=md5, 100=sha1, 1400=sha256, 3200=bcrypt</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">RSA</span></div>
+          <p class="desc">Inspect PEM and modulus properties.</p>
+          <div class="code-wrap">
+            <pre><code>openssl rsa -pubin -in key.pub -text -noout
+python3 -c 'from Crypto.PublicKey import RSA;k=RSA.import_key(open("key.pub").read());print(k.n.bit_length(), k.e)'
+RsaCtfTool -n N -e E --uncipher FILE</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">XOR</span></div>
+          <p class="desc">Single-byte or repeating-key XOR.</p>
+          <div class="code-wrap">
+            <pre><code># CyberChef XOR brute force
+python3 -c "c=open('cipher','rb').read();print([(k,bytes(b^k for b in c[:40])) for k in range(256)][:5])"</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">AES</span></div>
+          <p class="desc">Guess mode from behavior.</p>
+          <div class="code-wrap">
+            <pre><code># ECB: repeated plaintext blocks → repeated ciphertext blocks
+# CBC: needs IV; bit-flip on Ci affects Pi+1
+# CTR/GCM: nonce reuse is fatal
+openssl enc -aes-128-ecb -d -K KEYHEX -in c.bin -out p.bin</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// TTPS</div>
+          <h2>Technique usage</h2>
+        </div>
+        <div class="ttp-grid">
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">RSA WIENER</span><span class="tag muted">RSA</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Large e or unusually short private exponent.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Check e and n bit sizes.</li><li>Run Wiener / Boneh-Durfee style attacks.</li><li>Decrypt with recovered d.</li></ol>
+            <div class="gotcha">gotcha: Not every large-e key is Wiener-vulnerable — verify bounds.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">COMMON MODULUS</span><span class="tag muted">RSA</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Same n, different e, related messages.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Collect ciphertexts under e1,e2.</li><li>Apply common-modulus attack.</li><li>Recover plaintext without factors.</li></ol>
+            <div class="gotcha">gotcha: Messages must be identical (or related by known polynomial).</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">ECB CUT-AND-PASTE</span><span class="tag muted">AES</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>ECB mode cookie or token.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Align blocks by padding input length.</li><li>Swap ciphertext blocks to escalate role.</li><li>Verify server parses spliced token.</li></ol>
+            <div class="gotcha">gotcha: Needs block boundary control — prefix length matters.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">CBC BIT FLIP</span><span class="tag muted">AES</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>CBC ciphertext; flip a flag bit.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Flip bits in Ci to alter Pi+1.</li><li>Account for prior block corruption.</li><li>Automate if padding oracle returns errors.</li></ol>
+            <div class="gotcha">gotcha: Without an oracle, flips are blind — know exact plaintext structure.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">PADDING ORACLE</span><span class="tag muted">ORACLE</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Server distinguishes padding errors.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Confirm oracle (timing or error text).</li><li>Decrypt byte-by-byte from the end.</li><li>Forge valid ciphertexts for arbitrary plaintext.</li></ol>
+            <div class="gotcha">gotcha: Constant-time apps may still leak via different exception paths.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">HASH LENGTH EXT</span><span class="tag muted">HASH</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Secret-prefix MAC = H(secret||message).</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Identify hash (MD5/SHA1).</li><li>Use hashpump / custom extension.</li><li>Append admin data with valid tag.</li></ol>
+            <div class="gotcha">gotcha: Does not work for HMAC — only naive prefix MACs.</div>
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.cmd-play-card .copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.parentElement.querySelector('pre');
+        var text = pre ? pre.innerText : '';
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'COPIED';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

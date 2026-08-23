@@ -31,17 +31,62 @@
       <div class="content">
         <div class="page-header">
           <div class="section-label">// TECHNIQUES</div>
-          <h1>ATT&amp;CK-mapped TTPs</h1>
-          <p>Techniques with detection notes for the blue side of the team — split by CTF lab work and live attack tradecraft.</p>
+          <h1>Techniques &amp; Tools</h1>
+          <p>A collection of techniques, tools, commands, and practical notes learned through CTF challenges, labs, and security testing.</p>
         </div>
 
         <section class="phase-section" data-phase="ctf">
           <div class="phase-head">
             <span class="phase-num">01</span>
             <span class="phase-title">CTF Techniques</span>
-            <span class="phase-desc">Lab &amp; competition patterns — priv-esc, takeover, puzzle chains</span>
+            <span class="phase-desc">Techniques, methods, and lessons learned for solving challenges</span>
           </div>
           <div class="note-grid">
+            <a href="binary-exploitation.html" class="note-card" data-search="pwn binary exploitation bof rop heap fsb ctf">
+              <h3>Binary Exploitation</h3>
+              <p>CTF pwn playbook — toolkit, triage commands, and technique chains (ret2win, ret2libc, FSB, heap).</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">PWN</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+            <a href="web-exploitation.html" class="note-card" data-search="web exploitation xss sqli ssti ssrf lfi ctf">
+              <h3>Web Exploitation</h3>
+              <p>CTF web playbook — recon toolkit, injection primitives, XSS, SQLi, SSRF, SSTI, auth.</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">WEB</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+            <a href="reverse-engineering.html" class="note-card" data-search="reverse engineering ghidra gdb static dynamic ctf">
+              <h3>Reverse Engineering</h3>
+              <p>CTF REV playbook — static/dynamic toolkit, triage, patching, anti-debug.</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">REV</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+            <a href="forensics.html" class="note-card" data-search="forensics memory pcap disk stego volatility ctf">
+              <h3>Forensics</h3>
+              <p>CTF forensics playbook — disk, memory, PCAP, stego, timelines.</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">FORENSICS</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+            <a href="osint.html" class="note-card" data-search="osint domain username image geo recon ctf">
+              <h3>OSINT</h3>
+              <p>CTF OSINT playbook — domains, people, images, infrastructure.</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">OSINT</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+            <a href="crypto.html" class="note-card" data-search="crypto rsa aes xor hash oracle ctf">
+              <h3>Crypto</h3>
+              <p>CTF crypto playbook — RSA, AES modes, XOR, hashes, oracles.</p>
+              <div class="tags"><span class="tag">CTF</span><span class="tag">CRYPTO</span><span class="tag muted">PLAYBOOK</span></div>
+            </a>
+          </div>
+        </section>
+
+        <section class="phase-section" data-phase="attack">
+          <div class="phase-head">
+            <span class="phase-num">02</span>
+            <span class="phase-title">Attack Techniques</span>
+            <span class="phase-desc">Methods used to exploit vulnerabilities and gain access to target systems</span>
+          </div>
+          <div class="note-grid">
+            <a href="ssrf-internal.html" class="note-card" data-search="ssrf internal web cloud metadata attack">
+              <h3>SSRF to Internal Services</h3>
+              <p>Chaining SSRF into metadata endpoints, internal APIs and pivot points.</p>
+              <div class="tags"><span class="tag">SSRF</span><span class="tag muted">WEB</span><span class="tag muted">T1190</span></div>
+            </a>
             <a href="linux-privesc.html" class="note-card" data-search="linux privilege escalation privesc suid ctf">
               <h3>Linux Privilege Escalation</h3>
               <p>Common techniques and checklist for Linux privilege escalation.</p>
@@ -51,21 +96,6 @@
               <h3>Subdomain Takeover</h3>
               <p>Detecting dangling DNS records and claiming cloud resources.</p>
               <div class="tags"><span class="tag">RECON</span><span class="tag muted">AWS</span><span class="tag muted">T1584</span></div>
-            </a>
-          </div>
-        </section>
-
-        <section class="phase-section" data-phase="attack">
-          <div class="phase-head">
-            <span class="phase-num">02</span>
-            <span class="phase-title">Attack Techniques</span>
-            <span class="phase-desc">Engagement TTPs — web pivot, internal access, real-world paths</span>
-          </div>
-          <div class="note-grid">
-            <a href="ssrf-internal.html" class="note-card" data-search="ssrf internal web cloud metadata attack">
-              <h3>SSRF to Internal Services</h3>
-              <p>Chaining SSRF into metadata endpoints, internal APIs and pivot points.</p>
-              <div class="tags"><span class="tag">SSRF</span><span class="tag muted">WEB</span><span class="tag muted">T1190</span></div>
             </a>
           </div>
         </section>

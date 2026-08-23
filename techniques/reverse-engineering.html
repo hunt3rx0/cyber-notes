@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reverse Engineering — _4ut0b0t</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="../writeups/index.html" class="nav-link"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> TECHNIQUES</a>
+
+        <header class="pwn-hero">
+          <div class="pwn-hero-label">// CTF · REV · PLAYBOOK</div>
+          <div class="pwn-hero-cmd">
+            <span class="prompt">$</span> rev --category <span class="arg">reverse_engineering</span>
+          </div>
+          <p>Living notebook for CTF reverse engineering — static/dynamic toolkit, triage commands, and technique chains.</p>
+          <div class="tags"><span class="tag">STATIC</span><span class="tag">DYNAMIC</span><span class="tag">PATCH</span><span class="tag">ANTI-DEBUG</span><span class="tag muted">ELF</span><span class="tag muted">PE</span></div>
+        </header>
+
+        <div class="section-title-row">
+          <div class="section-label">// TOOLKIT</div>
+          <h2>Tools</h2>
+        </div>
+        <div class="toolkit-grid">
+          <div class="tool-card">
+            <h3><span class="name">ghidra / IDA</span> <span class="dash">—</span> Static decompiler</h3>
+            <p>Functions, xrefs, types, scripting — primary static analysis.</p>
+            <div class="tags"><span class="tag muted">STATIC</span><span class="tag muted">RE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">radare2 / Cutter</span> <span class="dash">—</span> CLI + GUI RE</h3>
+            <p>af, pdf, VV, seek — fast triage without a full project.</p>
+            <div class="tags"><span class="tag muted">STATIC</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">gdb + pwndbg/gef</span> <span class="dash">—</span> Dynamic debug</h3>
+            <p>breakpoints, watchpoints, heap/stack views, cyclic patterns.</p>
+            <div class="tags"><span class="tag muted">DYNAMIC</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Binary Ninja</span> <span class="dash">—</span> IL + graph</h3>
+            <p>Medium-level IL, useful for arm/x86 cross-work.</p>
+            <div class="tags"><span class="tag muted">STATIC</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">strings / FLOSS</span> <span class="dash">—</span> String recovery</h3>
+            <p>ASCII/Unicode + deobfuscated strings from malware samples.</p>
+            <div class="tags"><span class="tag muted">TRIAGE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">ltrace / strace</span> <span class="dash">—</span> Library &amp; syscall trace</h3>
+            <p>See libc calls and syscalls without full debug session.</p>
+            <div class="tags"><span class="tag muted">DYNAMIC</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Detect It Easy / file</span> <span class="dash">—</span> Packer detect</h3>
+            <p>Identify PE/ELF packers, compilers, overlays.</p>
+            <div class="tags"><span class="tag muted">TRIAGE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">x64dbg / WinDbg</span> <span class="dash">—</span> Windows debug</h3>
+            <p>User-mode and kernel-assisted RE on PE targets.</p>
+            <div class="tags"><span class="tag muted">DYNAMIC</span><span class="tag muted">PE</span></div>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// COMMANDS</div>
+          <h2>Working commands</h2>
+        </div>
+
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">TRIAGE</span><span class="tag muted">RECON</span></div>
+          <p class="desc">First pass on any unknown binary.</p>
+          <div class="code-wrap">
+            <pre><code>file ./sample
+checksec --file=./sample 2>/dev/null || echo PE/other
+strings -n 8 ./sample | head -100
+strings -el ./sample | head -40
+floss ./sample 2>/dev/null | less</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">STATIC</span></div>
+          <p class="desc">Locate main, interesting strings, crypto, and IO.</p>
+          <div class="code-wrap">
+            <pre><code>r2 -A ./sample
+# aaa ; afl ; izz ; / flag
+# Ghidra: import → analyze → search strings → xrefs</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">DYNAMIC</span></div>
+          <p class="desc">Run under debugger with safe args / fake inputs.</p>
+          <div class="code-wrap">
+            <pre><code>gdb -q ./sample
+# pwndbg: checksec, vmmap, tele $rsp
+break main
+run &lt; input.txt
+strace -f -e open,read,write,connect ./sample</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">PATCH</span></div>
+          <p class="desc">NOP checks, force branches, dump decrypted buffers.</p>
+          <div class="code-wrap">
+            <pre><code># r2: wx 90 @ addr   or   wa jmp 0x401234 @ addr
+# Ghidra: Patch Instruction → export program
+# re-test patched binary</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// TTPS</div>
+          <h2>Technique usage</h2>
+        </div>
+        <div class="ttp-grid">
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">STRING → XREF</span><span class="tag muted">STATIC</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Flag format or API names appear in strings.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Locate string in Ghidra/r2.</li><li>Xrefs to code that uses it.</li><li>Trace args into crypto/compare functions.</li></ol>
+            <div class="gotcha">gotcha: Compiler may split strings or build them on stack — search for fragments.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">ANTI-DEBUG</span><span class="tag muted">DYNAMIC</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Sample exits early under debugger or VM.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Identify IsDebuggerPresent / ptrace / timing checks.</li><li>Patch jump or return value.</li><li>Continue analysis on patched binary.</li></ol>
+            <div class="gotcha">gotcha: Multiple layered checks are common — re-run after each patch.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">PACKER UNPACK</span><span class="tag muted">TRIAGE</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>High entropy, few imports, weird entry.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Detect packer (DIE).</li><li>Debug to OEP; dump memory.</li><li>Fix IAT and analyze dump statically.</li></ol>
+            <div class="gotcha">gotcha: Modern packers virtualize code — dump alone may not be enough.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">CRYPTO ROUTINE</span><span class="tag muted">STATIC</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Custom encoding before network or file write.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Find constants (S-boxes, IVs, magic).</li><li>Identify algorithm or reimplement in Python.</li><li>Decrypt offline samples/traffic.</li></ol>
+            <div class="gotcha">gotcha: Confirm endianness and key schedule before writing a decryptor.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">PROTOCOL RE</span><span class="tag muted">DYNAMIC</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Client talks to custom TCP/UDP service.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>strace/Wireshark the conversation.</li><li>Map message structures in RE tool.</li><li>Rewrite client with pwntools/scapy.</li></ol>
+            <div class="gotcha">gotcha: Length fields and checksums break naive replay — parse fully.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">LICENSE / CRACKME</span><span class="tag muted">PATCH</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Serial check or trial nag.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Find comparison after input transform.</li><li>Patch JE/JNE or force success path.</li><li>Document key algorithm if required by challenge.</li></ol>
+            <div class="gotcha">gotcha: Some crackmes verify integrity of the binary — patch checks too.</div>
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.cmd-play-card .copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.parentElement.querySelector('pre');
+        var text = pre ? pre.innerText : '';
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'COPIED';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

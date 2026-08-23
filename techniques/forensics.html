@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forensics — _4ut0b0t</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="../writeups/index.html" class="nav-link"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> TECHNIQUES</a>
+
+        <header class="pwn-hero">
+          <div class="pwn-hero-label">// CTF · FORENSICS · PLAYBOOK</div>
+          <div class="pwn-hero-cmd">
+            <span class="prompt">$</span> forensics --category <span class="arg">digital_forensics</span>
+          </div>
+          <p>Living notebook for CTF forensics — disk, memory, network, and file-carving workflows.</p>
+          <div class="tags"><span class="tag">DISK</span><span class="tag">MEMORY</span><span class="tag">PCAP</span><span class="tag">STEGO</span><span class="tag muted">TIMELINE</span><span class="tag muted">ARTIFACTS</span></div>
+        </header>
+
+        <div class="section-title-row">
+          <div class="section-label">// TOOLKIT</div>
+          <h2>Tools</h2>
+        </div>
+        <div class="toolkit-grid">
+          <div class="tool-card">
+            <h3><span class="name">Volatility 3</span> <span class="dash">—</span> Memory analysis</h3>
+            <p>pslist, netscan, filescan, malfind, dump process memory.</p>
+            <div class="tags"><span class="tag muted">MEMORY</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Autopsy / Sleuth Kit</span> <span class="dash">—</span> Disk images</h3>
+            <p>NTFS/EXT recovery, timeline, keyword search.</p>
+            <div class="tags"><span class="tag muted">DISK</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">Wireshark / tshark</span> <span class="dash">—</span> Packet analysis</h3>
+            <p>Follow streams, export objects, display filters.</p>
+            <div class="tags"><span class="tag muted">PCAP</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">binwalk / foremost</span> <span class="dash">—</span> Carve files</h3>
+            <p>Firmware, embedded ZIPs, JPEG/PDF from blobs.</p>
+            <div class="tags"><span class="tag muted">CARVE</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">exiftool</span> <span class="dash">—</span> Metadata</h3>
+            <p>Image/PDF/Office EXIF, GPS, author, software tags.</p>
+            <div class="tags"><span class="tag muted">META</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">steghide / zsteg / stegsolve</span> <span class="dash">—</span> Steganography</h3>
+            <p>LSB, bit planes, trailing data in images/audio.</p>
+            <div class="tags"><span class="tag muted">STEGO</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">bulk_extractor</span> <span class="dash">—</span> Bulk scan</h3>
+            <p>Emails, URLs, AES keys, patterns from images.</p>
+            <div class="tags"><span class="tag muted">DISK</span></div>
+          </div>
+          <div class="tool-card">
+            <h3><span class="name">plaso / log2timeline</span> <span class="dash">—</span> Super timeline</h3>
+            <p>Correlate FS, EVTX, browser, prefetch artifacts.</p>
+            <div class="tags"><span class="tag muted">TIMELINE</span></div>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// COMMANDS</div>
+          <h2>Working commands</h2>
+        </div>
+
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">PCAP</span><span class="tag muted">RECON</span></div>
+          <p class="desc">First look at a capture.</p>
+          <div class="code-wrap">
+            <pre><code>capinfos capture.pcap
+tshark -r capture.pcap -q -z endpoints,ip
+tshark -r capture.pcap -Y 'http.request' -T fields -e http.host -e http.request.uri
+tshark -r capture.pcap -Y 'dns' -T fields -e dns.qry.name | sort -u</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">PCAP</span></div>
+          <p class="desc">Recover files from HTTP/SMB streams.</p>
+          <div class="code-wrap">
+            <pre><code>tshark -r capture.pcap --export-objects http,/tmp/http_obj
+tcpflow -r capture.pcap -o /tmp/flows</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">MEMORY</span></div>
+          <p class="desc">Identify OS profile and list processes.</p>
+          <div class="code-wrap">
+            <pre><code>vol -f mem.dmp windows.info
+vol -f mem.dmp windows.pslist
+vol -f mem.dmp windows.netscan
+vol -f mem.dmp windows.filescan | grep -i flag</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+        <div class="cmd-play-card">
+          <div class="tags"><span class="tag">DISK</span></div>
+          <p class="desc">Mount or carve an evidence image.</p>
+          <div class="code-wrap">
+            <pre><code>file evidence.img
+mmls evidence.img
+fls -r -p evidence.img
+binwalk -e firmware.bin
+foremost -i blob.bin -o /tmp/carved</code></pre>
+            <button type="button" class="copy-btn">COPY</button>
+          </div>
+        </div>
+
+        <div class="section-title-row">
+          <div class="section-label">// TTPS</div>
+          <h2>Technique usage</h2>
+        </div>
+        <div class="ttp-grid">
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">HTTP EXFIL</span><span class="tag muted">PCAP</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Suspicious POSTs or encoded query params.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Filter http.request.method == POST.</li><li>Follow TCP/HTTP stream.</li><li>Decode base64/URL/hex payloads offline.</li></ol>
+            <div class="gotcha">gotcha: Chunked or multi-request exfil needs reassembly across packets.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">MEMORY CREDENTIALS</span><span class="tag muted">MEMORY</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Need passwords, keys, or injected code.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>pslist / pstree for odd processes.</li><li>malfind + dump sections.</li><li>hashdump / cmdline artifacts.</li></ol>
+            <div class="gotcha">gotcha: Wrong profile/symbol table yields empty plugins — confirm windows.info first.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">STEGO IMAGE</span><span class="tag muted">STEGO</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Challenge gives a PNG/JPEG with nothing obvious.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>exiftool + strings + zsteg.</li><li>Check LSB / bit planes in stegsolve.</li><li>Try steghide with wordlist if passphrase required.</li></ol>
+            <div class="gotcha">gotcha: Trailing ZIP after IEND is common — run binwalk.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">DELETED FILES</span><span class="tag muted">DISK</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>File was deleted but still recoverable.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>fls/icat or Autopsy deleted view.</li><li>Search unallocated with bulk_extractor.</li><li>Carve by header/footer if FS metadata gone.</li></ol>
+            <div class="gotcha">gotcha: SSD TRIM may zero unallocated — carving can fail on modern disks.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">BROWSER ARTIFACTS</span><span class="tag muted">DISK</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>User activity on a workstation image.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Locate History/Login Data/Cookies DB.</li><li>sqlite3 queries on Chromium DBs.</li><li>Correlate with downloads and typed URLs.</li></ol>
+            <div class="gotcha">gotcha: Profiles may be multiple — check every user path.</div>
+          </div>
+          <div class="ttp-card">
+            <div class="tags"><span class="tag">TIMELINE</span><span class="tag muted">TIMELINE</span></div>
+            <div class="block-label">// WHEN</div>
+            <p>Need sequence of attacker actions.</p>
+            <div class="block-label">// CHAIN</div>
+            <ol><li>Build plaso timeline from disk.</li><li>Filter by path/keyword around incident window.</li><li>Cross-check with EVTX and prefetch.</li></ol>
+            <div class="gotcha">gotcha: Timezone skew between artifacts is a frequent CTF trick.</div>
+          </div>
+        </div>
+
+      </div>
+      <footer class="page-footer">// NOTES ARE STATIC, VERSIONED IN GIT — EDIT HTML AND PUSH</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.cmd-play-card .copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pre = btn.parentElement.querySelector('pre');
+        var text = pre ? pre.innerText : '';
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'COPIED';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
